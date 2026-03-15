@@ -9,6 +9,8 @@ from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.db.models import Sum,Avg
+
 User = get_user_model()
 
 
@@ -182,16 +184,8 @@ class RejectBidView(View):
 
 class ContractListView(View):
     def get(self, request):
-
-        contracts = Contract.objects.filter(
-            client=request.user
-        ) | Contract.objects.filter(
-            freelancer=request.user
-        )
-
-        return render(request, "contract_list.html", {
-            "contracts": contracts
-        })
+        contracts = Contract.objects.filter(client=request.user) | Contract.objects.filter(freelancer=request.user)
+        return render(request, "contract_list.html", {"contracts": contracts})
 
 class ContractDetailView(View):
     def get(self, request, contract_id):
@@ -263,7 +257,36 @@ class FreelancerListView(View):
                 Q(email__icontains=query) |
                 Q(bio__icontains=query)
             )
-
         context = {"freelancers": freelancers,"query": query}
 
         return render(request, "freelancer_list.html", context)
+
+
+class ClientPaymentHistoryView(View):
+    def get(self, request):
+        finished_contracts = Contract.objects.filter(client=request.user,status="finished").select_related("project", "freelancer")
+        total_spent = finished_contracts.aggregate(total=Sum("agreed_price"))["total"] or 0
+        context = {"contracts": finished_contracts,"total_spent": total_spent,}
+        return render(request,"client_payment_history.html", context)
+
+
+
+class FreelancerEarningsHistoryView(View):
+    def get(self, request):
+        finished_contracts = Contract.objects.filter(freelancer=request.user,status="finished").select_related("project", "client")
+        total_earnings = finished_contracts.aggregate(total=Sum("agreed_price"))["total"] or 0
+        average_payment = finished_contracts.aggregate(avg=Avg("agreed_price"))["avg"] or 0
+        context = {"contracts": finished_contracts, "total_earnings": total_earnings,"average_payment": average_payment,"completed_projects": finished_contracts.count(),}
+        return render(request, "freelancer_earnings_history.html", context)
+
+
+
+class FreelancerReviewsView(View):
+    def get(self, request):
+        reviews = Review.objects.filter( contract__freelancer=request.user).select_related("contract", "contract__client")
+        context = {"reviews": reviews}
+        return render(request, "reviews.html", context)
+
+class AboutView(View):
+    def get(self,request):
+        return render(request,'about.html')

@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}Payment History · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .payments-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Page header ── */
+  .page-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  /* ── Summary cards ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .summary-card:hover { border-color: rgba(79,142,247,.3); transform: translateY(-2px); }
+
+  .summary-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 0 16px 0 80px;
+    opacity: 0.07;
+  }
+
+  .summary-card:nth-child(1)::after { background: var(--accent); }
+  .summary-card:nth-child(2)::after { background: #4ade80; }
+  .summary-card:nth-child(3)::after { background: var(--accent2); }
+
+  .s-icon { font-size: 1.3rem; margin-bottom: 12px; display: block; }
+
+  .s-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .s-lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+
+  /* ── Table card ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .table-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+  }
+
+  .table-count {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px 12px;
+  }
+
+  /* ── Table ── */
+  .payments-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .payments-table thead tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .payments-table thead th {
+    padding: 12px 20px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .payments-table thead th:last-child { text-align: right; }
+
+  .payments-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+
+  .payments-table tbody tr:last-child { border-bottom: none; }
+  .payments-table tbody tr:hover { background: var(--surface2); }
+
+  .payments-table tbody td {
+    padding: 16px 20px;
+    font-size: 0.875rem;
+    vertical-align: middle;
+  }
+
+  /* Project cell */
+  .project-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .project-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .project-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+  .project-name {
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  /* Freelancer cell */
+  .freelancer-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .f-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: .75rem; color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .f-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .f-name { color: var(--muted); font-size: .85rem; }
+
+  /* Amount cell */
+  .amount-cell {
+    text-align: right;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  /* Date cell */
+  .date-cell { color: var(--muted); font-size: .82rem; white-space: nowrap; }
+
+  /* Status badge */
+  .paid-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.25);
+    border-radius: 100px;
+    padding: 3px 10px;
+    font-size: .68rem;
+    font-weight: 700;
+    color: #4ade80;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  /* ── Empty state ── */
+  .empty-row td {
+    text-align: center;
+    padding: 64px 32px !important;
+  }
+
+  .empty-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .empty-inner .e-icon { font-size: 2.5rem; opacity: .3; }
+  .empty-inner h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
+  .empty-inner p  { color: var(--muted); font-size: .875rem; }
+
+  /* ── Total row ── */
+  .total-row td {
+    padding: 16px 20px !important;
+    border-top: 2px solid var(--border) !important;
+    background: var(--surface2);
+  }
+
+  .total-label {
+    font-family: 'Syne', sans-serif;
+    font-size: .85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+  }
+
+  .total-amount {
+    text-align: right;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  @media (max-width: 720px) {
+    .payments-wrapper { padding: 32px 16px; }
+    .summary-bar { grid-template-columns: 1fr 1fr; }
+    .page-top { flex-direction: column; align-items: flex-start; }
+    .payments-table thead th:nth-child(4),
+    .payments-table tbody td:nth-child(4) { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .summary-bar { grid-template-columns: 1fr; }
+    .payments-table thead th:nth-child(2),
+    .payments-table tbody td:nth-child(2) { display: none; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="payments-wrapper">
+
+  <!-- Header -->
+  <div class="page-top">
+    <div>
+      <h1>Payment History</h1>
+      <p>All completed payments for your finished projects.</p>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="summary-bar">
+    <div class="summary-card">
+      <span class="s-icon">💳</span>
+      <div class="s-val">${{ total_spent }}</div>
+      <div class="s-lbl">Total spent</div>
+    </div>
+    <div class="summary-card">
+      <span class="s-icon">✅</span>
+      <div class="s-val">{{ contracts|length }}</div>
+      <div class="s-lbl">Paid contracts</div>
+    </div>
+    <div class="summary-card">
+      <span class="s-icon">👥</span>
+      <div class="s-val">{{ contracts|length }}</div>
+      <div class="s-lbl">Freelancers paid</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-title">📋 Transactions</span>
+      <span class="table-count">{{ contracts|length }} record{{ contracts|length|pluralize }}</span>
+    </div>
+
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Freelancer</th>
+          <th>Status</th>
+          <th>Finished At</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contracts %}
+        <tr>
+
+          <!-- Project -->
+          <td>
+            <div class="project-cell">
+              <div class="project-icon">
+                {% if c.project.image %}
+                  <img src="{{ c.project.image.url }}" alt="{{ c.project.title }}">
+                {% else %}
+                  📁
+                {% endif %}
+              </div>
+              <span class="project-name">{{ c.project.title }}</span>
+            </div>
+          </td>
+
+          <!-- Freelancer -->
+          <td>
+            <div class="freelancer-cell">
+              <div class="f-avatar">
+                {% if c.freelancer.avatar %}
+                  <img src="{{ c.freelancer.avatar.url }}" alt="{{ c.freelancer.username }}">
+                {% else %}
+                  {{ c.freelancer.username|first|upper }}
+                {% endif %}
+              </div>
+              <span class="f-name">{{ c.freelancer.username }}</span>
+            </div>
+          </td>
+
+          <!-- Status -->
+          <td>
+            <span class="paid-badge">✓ Paid</span>
+          </td>
+
+          <!-- Date -->
+          <td>
+            <span class="date-cell">
+              📅 {{ c.finished_at|date:"d M Y" }}
+            </span>
+          </td>
+
+          <!-- Amount -->
+          <td>
+            <div class="amount-cell">${{ c.agreed_price }}</div>
+          </td>
+
+        </tr>
+        {% empty %}
+        <tr class="empty-row">
+          <td colspan="5">
+            <div class="empty-inner">
+              <span class="e-icon">💳</span>
+              <h3>No payments yet</h3>
+              <p>Payments appear here once a contract is finished.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+
+        {% if contracts %}
+        <tr class="total-row">
+          <td colspan="4">
+            <span class="total-label">Total Spent</span>
+          </td>
+          <td>
+            <div class="total-amount">${{ total_spent }}</div>
+          </td>
+        </tr>
+        {% endif %}
+
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

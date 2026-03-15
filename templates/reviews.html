@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+{% block title %}My Reviews · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .reviews-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Page header ── */
+  .page-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .summary-card:hover { border-color: rgba(240,192,96,.3); transform: translateY(-2px); }
+
+  .summary-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 0 16px 0 80px;
+    opacity: 0.08;
+  }
+
+  .summary-card:nth-child(1)::after { background: #fcd34d; }
+  .summary-card:nth-child(2)::after { background: var(--accent); }
+  .summary-card:nth-child(3)::after { background: #4ade80; }
+
+  .s-icon { font-size: 1.3rem; margin-bottom: 12px; display: block; }
+
+  .s-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .s-lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+
+  /* ── Rating breakdown ── */
+  .rating-breakdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .avg-score {
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .avg-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #fcd34d;
+    margin-bottom: 6px;
+  }
+
+  .avg-stars { font-size: 1.2rem; margin-bottom: 6px; }
+  .avg-count { font-size: 0.78rem; color: var(--muted); }
+
+  .bars { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+  }
+
+  .bar-label { color: var(--muted); width: 14px; text-align: right; flex-shrink: 0; }
+
+  .bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: #fcd34d;
+    transition: width .4s ease;
+  }
+
+  .bar-count { color: var(--muted); width: 20px; text-align: right; flex-shrink: 0; }
+
+  /* ── Filter pills ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 7px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .18s;
+    font-family: inherit;
+  }
+
+  .filter-pill:hover  { border-color: #fcd34d; color: #fcd34d; }
+  .filter-pill.active { background: rgba(240,192,96,.15); border-color: rgba(240,192,96,.4); color: #fcd34d; }
+
+  /* ── Review card ── */
+  .review-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px 26px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .review-card:hover { border-color: rgba(240,192,96,.3); transform: translateY(-2px); }
+
+  .review-card::before {
+    content: '"';
+    position: absolute;
+    top: 12px; right: 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 5rem;
+    font-weight: 800;
+    color: rgba(240,192,96,.08);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .review-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .reviewer-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: .9rem; color: #fff;
+    flex-shrink: 0;
+    border: 2px solid rgba(79,142,247,.3);
+    overflow: hidden;
+  }
+
+  .reviewer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .reviewer-name {
+    font-family: 'Syne', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .reviewer-sub { font-size: .72rem; color: var(--muted); }
+
+  /* Star display */
+  .star-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stars { font-size: 1rem; line-height: 1; }
+
+  .rating-num {
+    font-family: 'Syne', sans-serif;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #fcd34d;
+    background: rgba(240,192,96,.1);
+    border: 1px solid rgba(240,192,96,.25);
+    border-radius: 100px;
+    padding: 3px 10px;
+  }
+
+  /* Comment */
+  .review-comment {
+    font-size: .9rem;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+
+  /* Footer */
+  .review-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .review-date { font-size: .75rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+  .review-project {
+    font-size: .75rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 3px 10px;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 32px;
+    border: 1px dashed var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+  }
+
+  .empty-state .e-icon { font-size: 3rem; display: block; margin-bottom: 16px; opacity: .35; }
+
+  .empty-state h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p { color: var(--muted); font-size: .875rem; line-height: 1.65; }
+
+  @media (max-width: 640px) {
+    .reviews-wrapper { padding: 32px 16px; }
+    .summary-bar     { grid-template-columns: 1fr 1fr; }
+    .rating-breakdown { flex-direction: column; gap: 20px; }
+    .page-top        { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="reviews-wrapper">
+
+  <div class="page-top">
+    <div>
+      <h1>Client Reviews</h1>
+      <p>Feedback left by clients on your completed projects.</p>
+    </div>
+    <span style="font-size:.82rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:6px 16px;">
+      {{ reviews|length }} review{{ reviews|length|pluralize }}
+    </span>
+  </div>
+
+  {% if reviews %}
+
+  <!-- Summary cards -->
+  <div class="summary-bar">
+    <div class="summary-card">
+      <span class="s-icon">⭐</span>
+      <div class="s-val" id="avgDisplay">—</div>
+      <div class="s-lbl">Avg. rating</div>
+    </div>
+    <div class="summary-card">
+      <span class="s-icon">📋</span>
+      <div class="s-val">{{ reviews|length }}</div>
+      <div class="s-lbl">Total reviews</div>
+    </div>
+    <div class="summary-card">
+      <span class="s-icon">🏆</span>
+      <div class="s-val" id="fiveStarCount">—</div>
+      <div class="s-lbl">5-star reviews</div>
+    </div>
+  </div>
+
+  <!-- Rating breakdown -->
+  <div class="rating-breakdown">
+    <div class="avg-score">
+      <div class="avg-number" id="bigAvg">—</div>
+      <div class="avg-stars" id="avgStarsDisplay"></div>
+      <div class="avg-count">out of 5</div>
+    </div>
+    <div class="bars">
+      {% for star in "54321" %}
+      <div class="bar-row">
+        <span class="bar-label">{{ star }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" id="bar{{ star }}" style="width:0%"></div>
+        </div>
+        <span class="bar-count" id="cnt{{ star }}">0</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Filter pills -->
+  <div class="filter-bar">
+    <button class="filter-pill active" onclick="filterReviews(this, 0)">All</button>
+    <button class="filter-pill" onclick="filterReviews(this, 5)">⭐⭐⭐⭐⭐ 5</button>
+    <button class="filter-pill" onclick="filterReviews(this, 4)">⭐⭐⭐⭐ 4</button>
+    <button class="filter-pill" onclick="filterReviews(this, 3)">⭐⭐⭐ 3</button>
+    <button class="filter-pill" onclick="filterReviews(this, 2)">⭐⭐ 2</button>
+    <button class="filter-pill" onclick="filterReviews(this, 1)">⭐ 1</button>
+  </div>
+
+  {% endif %}
+
+  <!-- Review cards -->
+  <div id="reviewsList">
+    {% for r in reviews %}
+    <div class="review-card" data-rating="{{ r.rating }}">
+
+      <div class="review-top">
+        <div class="reviewer-info">
+          <div class="reviewer-avatar">
+            {% if r.contract.client.avatar %}
+              <img src="{{ r.contract.client.avatar.url }}" alt="{{ r.client.username }}">
+            {% else %}
+              {{ r.client.username|first|upper }}
+            {% endif %}
+          </div>
+          <div>
+            <div class="reviewer-name">{{ r.client.username }}</div>
+            <div class="reviewer-sub">🏢 Client</div>
+          </div>
+        </div>
+
+        <div class="star-display">
+          <span class="stars">
+            {% for i in "12345" %}
+              {% if forloop.counter <= r.rating %}⭐{% else %}☆{% endif %}
+            {% endfor %}
+          </span>
+          <span class="rating-num">{{ r.rating }}/5</span>
+        </div>
+      </div>
+
+      {% if r.comment %}
+      <p class="review-comment">"{{ r.comment }}"</p>
+      {% endif %}
+
+      <div class="review-footer">
+        <span class="review-date">📅 {{ r.created_at|date:"d M Y" }}</span>
+        {% if r.contract.project %}
+        <span class="review-project">📁 {{ r.contract.project.title }}</span>
+        {% endif %}
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <span class="e-icon">⭐</span>
+      <h3>No reviews yet</h3>
+      <p>Reviews will appear here once clients leave feedback on your completed contracts.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.review-card');
+    if (!cards.length) return;
+
+    const counts  = {1:0, 2:0, 3:0, 4:0, 5:0};
+    let total = 0;
+
+    cards.forEach(c => {
+      const r = parseInt(c.dataset.rating);
+      if (counts[r] !== undefined) counts[r]++;
+      total += r;
+    });
+
+    const avg = (total / cards.length).toFixed(1);
+
+    // Summary cards
+    const avgEl = document.getElementById('avgDisplay');
+    const bigEl = document.getElementById('bigAvg');
+    const fiveEl = document.getElementById('fiveStarCount');
+    if (avgEl)  avgEl.textContent  = avg;
+    if (bigEl)  bigEl.textContent  = avg;
+    if (fiveEl) fiveEl.textContent = counts[5];
+
+    // Avg stars display
+    const starsEl = document.getElementById('avgStarsDisplay');
+    if (starsEl) {
+      const full = Math.round(avg);
+      starsEl.textContent = '⭐'.repeat(full) + '☆'.repeat(5 - full);
+    }
+
+    // Bars
+    for (let s = 1; s <= 5; s++) {
+      const bar = document.getElementById('bar' + s);
+      const cnt = document.getElementById('cnt' + s);
+      if (bar) bar.style.width = (counts[s] / cards.length * 100).toFixed(0) + '%';
+      if (cnt) cnt.textContent = counts[s];
+    }
+  });
+
+  function filterReviews(btn, rating) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.review-card').forEach(card => {
+      card.style.display = (!rating || parseInt(card.dataset.rating) === rating) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

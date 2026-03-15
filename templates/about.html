@@ -1,0 +1,739 @@
+{% extends "base.html" %}
+{% block title %}About Us · Upwork{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Scroll reveal ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── HERO ── */
+  .about-hero {
+    min-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 32px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .about-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 40%, rgba(79,142,247,.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 60%, rgba(167,139,250,.1) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 10%, rgba(34,197,94,.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Floating orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    animation: drift 8s ease-in-out infinite alternate;
+  }
+
+  .orb-1 { width: 400px; height: 400px; background: rgba(79,142,247,.07); top: -100px; left: -80px; animation-delay: 0s; }
+  .orb-2 { width: 300px; height: 300px; background: rgba(167,139,250,.08); bottom: -80px; right: -60px; animation-delay: -3s; }
+  .orb-3 { width: 200px; height: 200px; background: rgba(34,197,94,.06); top: 30%; right: 10%; animation-delay: -5s; }
+
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(20px, -20px) scale(1.05); }
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(79,142,247,.1);
+    border: 1px solid rgba(79,142,247,.25);
+    border-radius: 100px;
+    padding: 6px 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 1;
+    animation: fadeDown .8s ease both;
+  }
+
+  .hero-eyebrow .pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-headline {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    max-width: 820px;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp .9s .1s ease both;
+  }
+
+  .hero-headline .line-accent {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.8;
+    margin-bottom: 48px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp .9s .25s ease both;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp .9s .4s ease both;
+  }
+
+  /* ── STATS STRIP ── */
+  .stats-strip {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 32px;
+  }
+
+  .stats-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 0 24px;
+    border-right: 1px solid var(--border);
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--text), rgba(255,255,255,.6));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-lbl {
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── MISSION ── */
+  .mission-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 100px 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .mission-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .mission-headline {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 24px;
+  }
+
+  .mission-text {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.85;
+    margin-bottom: 16px;
+  }
+
+  .mission-visual {
+    position: relative;
+  }
+
+  .mission-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mission-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(79,142,247,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .mission-quote {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    letter-spacing: -0.2px;
+  }
+
+  .mission-quote span { color: var(--accent); }
+
+  .quote-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .author-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1rem; color: #fff;
+    flex-shrink: 0;
+  }
+
+  .author-name { font-weight: 600; font-size: 0.9rem; }
+  .author-title { font-size: 0.75rem; color: var(--muted); }
+
+  .floating-badge {
+    position: absolute;
+    bottom: -18px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid rgba(34,197,94,.3);
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+
+  .badge-icon { font-size: 1.5rem; }
+  .badge-val { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; color: #4ade80; line-height: 1; }
+  .badge-sub { font-size: 0.7rem; color: var(--muted); }
+
+  /* ── VALUES ── */
+  .values-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 100px 32px;
+  }
+
+  .values-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .section-headline {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    color: var(--muted);
+    text-align: center;
+    font-size: 0.95rem;
+    max-width: 500px;
+    margin: 0 auto 60px;
+    line-height: 1.7;
+  }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .value-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .value-card:hover { border-color: rgba(79,142,247,.35); transform: translateY(-4px); }
+
+  .value-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .value-card:nth-child(1)::after { background: linear-gradient(90deg, var(--accent), transparent); }
+  .value-card:nth-child(2)::after { background: linear-gradient(90deg, var(--accent2), transparent); }
+  .value-card:nth-child(3)::after { background: linear-gradient(90deg, #4ade80, transparent); }
+  .value-card:nth-child(4)::after { background: linear-gradient(90deg, #fcd34d, transparent); }
+  .value-card:nth-child(5)::after { background: linear-gradient(90deg, #f87171, transparent); }
+  .value-card:nth-child(6)::after { background: linear-gradient(90deg, #93c5fd, transparent); }
+  .value-card:hover::after { opacity: 1; }
+
+  .value-icon {
+    font-size: 2rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .value-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .value-desc { color: var(--muted); font-size: 0.875rem; line-height: 1.75; }
+
+  /* ── TEAM ── */
+  .team-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 100px 32px;
+  }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .team-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .team-card:hover { border-color: rgba(79,142,247,.35); transform: translateY(-4px); }
+
+  .team-cover {
+    height: 80px;
+    position: relative;
+  }
+
+  .team-card:nth-child(1) .team-cover { background: linear-gradient(135deg, rgba(79,142,247,.3), rgba(167,139,250,.2)); }
+  .team-card:nth-child(2) .team-cover { background: linear-gradient(135deg, rgba(34,197,94,.25), rgba(79,142,247,.2)); }
+  .team-card:nth-child(3) .team-cover { background: linear-gradient(135deg, rgba(240,192,96,.25), rgba(239,68,68,.15)); }
+  .team-card:nth-child(4) .team-cover { background: linear-gradient(135deg, rgba(167,139,250,.3), rgba(34,197,94,.15)); }
+
+  .team-avatar-wrap {
+    position: absolute;
+    bottom: -24px;
+    left: 20px;
+  }
+
+  .team-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.1rem; color: #fff;
+    border: 3px solid var(--surface);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .team-body { padding: 36px 20px 22px; }
+
+  .team-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .team-role { font-size: 0.75rem; color: var(--accent); margin-bottom: 10px; font-weight: 600; }
+  .team-bio  { font-size: 0.78rem; color: var(--muted); line-height: 1.65; }
+
+  /* ── CTA BANNER ── */
+  .cta-section {
+    padding: 80px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, rgba(79,142,247,.12) 0%, rgba(167,139,250,.08) 100%);
+    border: 1px solid rgba(79,142,247,.2);
+    border-radius: 28px;
+    padding: 72px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-inner::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(79,142,247,.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-inner h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3.5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-inner p {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 36px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-btns {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 900px) {
+    .mission-section { grid-template-columns: 1fr; gap: 40px; }
+    .values-grid      { grid-template-columns: 1fr 1fr; }
+    .team-grid        { grid-template-columns: 1fr 1fr; }
+    .stats-inner      { grid-template-columns: 1fr 1fr; }
+    .stat-item        { border-right: none; border-bottom: 1px solid var(--border); padding: 20px 0; }
+    .stat-item:nth-child(2n) { border-right: none; }
+    .cta-inner        { padding: 48px 32px; }
+  }
+
+  @media (max-width: 580px) {
+    .values-grid { grid-template-columns: 1fr; }
+    .team-grid   { grid-template-columns: 1fr; }
+    .stats-inner { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ═══════════════════════════
+     HERO
+═══════════════════════════ -->
+<section class="about-hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-eyebrow">
+    <span class="pulse"></span> Our Story
+  </div>
+
+  <h1 class="hero-headline">
+    We believe work<br>
+    should <span class="line-accent">work for everyone</span>
+  </h1>
+
+  <p class="hero-sub">
+    Upwork is the world's work marketplace — connecting businesses with
+    independent talent from around the globe, so great work can get done
+    anywhere, by anyone.
+  </p>
+
+  <div class="hero-cta">
+    <a href="{% url 'signup' %}" class="btn btn-primary" style="font-size:1rem;padding:14px 36px;">
+      Join Upwork
+    </a>
+    <a href="{% url 'project_list' %}" class="btn btn-outline" style="font-size:1rem;padding:14px 36px;">
+      Browse work
+    </a>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════
+     STATS STRIP
+═══════════════════════════ -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div class="stat-item reveal">
+      <div class="stat-num">48K+</div>
+      <div class="stat-lbl">Freelancers</div>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:.1s;">
+      <div class="stat-num">12K+</div>
+      <div class="stat-lbl">Projects posted</div>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:.2s;">
+      <div class="stat-num">$2.4M</div>
+      <div class="stat-lbl">Total paid out</div>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:.3s;">
+      <div class="stat-num">120+</div>
+      <div class="stat-lbl">Countries</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════
+     MISSION
+═══════════════════════════ -->
+<section class="mission-section">
+  <div class="reveal">
+    <p class="mission-label">Our Mission</p>
+    <h2 class="mission-headline">
+      Creating economic<br>
+      opportunities so people<br>
+      have better lives
+    </h2>
+    <p class="mission-text">
+      We started with a simple idea — that talented people everywhere
+      deserve access to great opportunities, and great businesses deserve
+      access to the best talent, regardless of location.
+    </p>
+    <p class="mission-text">
+      Today, Upwork is where the world's top companies and most skilled
+      independent professionals meet to get things done. From startups
+      to Fortune 500s, clients around the world trust Upwork for
+      everything from quick tasks to complex, ongoing work.
+    </p>
+  </div>
+
+  <div class="mission-visual reveal" style="transition-delay:.15s;">
+    <div class="mission-card">
+      <p class="mission-quote">
+        "The future of work is <span>flexible, remote,</span>
+        and built on trust between great people."
+      </p>
+      <div class="quote-author">
+        <div class="author-avatar">H</div>
+        <div>
+          <div class="author-name">Hayden Brown</div>
+          <div class="author-title">CEO, Upwork</div>
+        </div>
+      </div>
+    </div>
+    <div class="floating-badge">
+      <span class="badge-icon">🌍</span>
+      <div>
+        <div class="badge-val">120+</div>
+        <div class="badge-sub">Countries represented</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════
+     VALUES
+═══════════════════════════ -->
+<section class="values-section">
+  <div class="values-inner">
+    <p class="section-eyebrow reveal">What we stand for</p>
+    <h2 class="section-headline reveal">Our core values</h2>
+    <p class="section-sub reveal">
+      Everything we build and every decision we make is grounded in
+      six principles that define who we are.
+    </p>
+
+    <div class="values-grid">
+      <div class="value-card reveal">
+        <span class="value-icon">🤝</span>
+        <div class="value-title">Trust & Transparency</div>
+        <p class="value-desc">
+          We build trust through honest communication, secure payments,
+          and verified profiles — so every interaction starts with
+          confidence.
+        </p>
+      </div>
+      <div class="value-card reveal" style="transition-delay:.08s;">
+        <span class="value-icon">⚡</span>
+        <div class="value-title">Move Fast</div>
+        <p class="value-desc">
+          The world of work moves quickly. We build tools that help
+          clients and freelancers move with it — from first contact
+          to final delivery.
+        </p>
+      </div>
+      <div class="value-card reveal" style="transition-delay:.16s;">
+        <span class="value-icon">🌍</span>
+        <div class="value-title">Borderless Opportunity</div>
+        <p class="value-desc">
+          Talent has no timezone, no borders, no headquarters.
+          We exist to make sure opportunity is equally accessible
+          to everyone, everywhere.
+        </p>
+      </div>
+      <div class="value-card reveal" style="transition-delay:.24s;">
+        <span class="value-icon">💡</span>
+        <div class="value-title">Continuous Learning</div>
+        <p class="value-desc">
+          The best professionals never stop growing. We invest in
+          tools and resources that help our community stay ahead
+          of an ever-changing market.
+        </p>
+      </div>
+      <div class="value-card reveal" style="transition-delay:.32s;">
+        <span class="value-icon">🛡️</span>
+        <div class="value-title">Safety First</div>
+        <p class="value-desc">
+          Escrow-backed payments, dispute resolution, and a
+          dedicated trust team ensure every project is protected
+          from start to finish.
+        </p>
+      </div>
+      <div class="value-card reveal" style="transition-delay:.4s;">
+        <span class="value-icon">🎯</span>
+        <div class="value-title">Outcome Obsessed</div>
+        <p class="value-desc">
+          We measure success the only way that matters — by the
+          quality of work delivered and the satisfaction of every
+          client and freelancer we serve.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════
+     CTA BANNER
+═══════════════════════════ -->
+<section class="cta-section">
+  <div class="cta-inner reveal">
+    <h2>Ready to join the future of work?</h2>
+    <p>
+      Whether you're a business looking for top talent or a professional
+      ready to take on great projects — your next opportunity starts here.
+    </p>
+    <div class="cta-btns">
+      <a href="{% url 'signup' %}" class="btn btn-primary" style="font-size:.95rem;padding:13px 32px;">
+        Get started free →
+      </a>
+      <a href="{% url 'login' %}" class="btn btn-outline" style="font-size:.95rem;padding:13px 32px;">
+        Sign in
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+{% endblock %}

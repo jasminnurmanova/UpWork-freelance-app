@@ -388,15 +388,13 @@
       <a href="{% url 'project_list' %}" class="sidebar-item"><span class="icon">🔍</span> Browse Jobs</a>
       <a href="{% url 'freelancer_bid_list' %}" class="sidebar-item"><span class="icon">📋</span> My Proposals</a>
       <a href="{% url 'contract_list' %}" class="sidebar-item"><span class="icon">💼</span> Active Contracts</a>
-      <a href="#" class="sidebar-item"><span class="icon">✅</span> Completed</a>
+      <a href="{% url 'freelancer_earnings_history' %}" class="sidebar-item"><span class="icon">✅</span> Earnings history</a>
       <span class="sidebar-section">Earnings</span>
-      <a href="#" class="sidebar-item"><span class="icon">💵</span> Earnings</a>
-      <a href="#" class="sidebar-item"><span class="icon">📊</span> Reports</a>
-      <a href="#" class="sidebar-item"><span class="icon">🏦</span> Withdraw</a>
+      <a href="{% url 'freelancer_reviews' %}" class="sidebar-item"><span class="icon">💵</span> Reviews </a>
       <span class="sidebar-section">Account</span>
-      <a href="#" class="sidebar-item"><span class="icon">👤</span> My Profile</a>
+      <a href="{% url 'profile' %}" class="sidebar-item"><span class="icon">👤</span> My Profile</a>
       <a href="#" class="sidebar-item"><span class="icon">🔔</span> Notifications <span class="sidebar-badge">3</span></a>
-      <a href="#" class="sidebar-item"><span class="icon">⚙️</span> Settings</a>
+      <a href="{% url 'about' %}" class="sidebar-item"><span class="icon">⚙️</span> About us</a>
     {% else %}
       <span class="sidebar-section">Main</span>
       <a href="{% url 'home' %}" class="sidebar-item active"><span class="icon">⚡</span> Overview</a>
@@ -406,12 +404,10 @@
     <span class="icon">📨</span> Proposals
 </a>      <a href="{% url 'contract_list' %}" class="sidebar-item"><span class="icon">💬</span> Contracts</a>
       <span class="sidebar-section">Billing</span>
-      <a href="#" class="sidebar-item"><span class="icon">💳</span> Payments</a>
-      <a href="#" class="sidebar-item"><span class="icon">🧾</span> Invoices</a>
+      <a href="{% url 'client_payment_history' %}" class="sidebar-item"><span class="icon">💳</span> Payments</a>
       <span class="sidebar-section">Account</span>
-      <a href="#" class="sidebar-item"><span class="icon">🏢</span> Company Profile</a>
+      <a href="{% url 'about' %}" class="sidebar-item"><span class="icon">🏢</span> About Us </a>
       <a href="#" class="sidebar-item"><span class="icon">🔔</span> Notifications</a>
-      <a href="#" class="sidebar-item"><span class="icon">⚙️</span> Settings</a>
     {% endif %}
 
     <!-- USER CARD + LOGOUT -->
@@ -511,8 +507,8 @@
         <div class="actions-grid">
           <a href="{% url 'project_list' %}" class="action-btn"><span>🔍</span> Browse Jobs</a>
           <a href="{% url 'profile' %}" class="action-btn"><span>👤</span> My profile</a>
-          <a href="#" class="action-btn"><span>💵</span>Earnings history</a>
-          <a href="#" class="action-btn"><span>📊</span> Analytics</a>
+          <a href="{% url 'freelancer_earnings_history'%}" class="action-btn"><span>💵</span>Earnings history</a>
+          <a href="{% url 'about' %}" class="action-btn"><span>📊</span> About Us</a>
         </div>
       </div>
       <div>
@@ -540,47 +536,65 @@
       <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-value">{{completed}}</div><div class="stat-label">Completed</div></div>
     </div>
 
+
     <div class="section-header">
       <span class="section-title">Active Projects</span>
       <a href="{% url 'my_projects' %}" class="btn btn-ghost" style="font-size:.8rem;padding:7px 16px;">All projects</a>
     </div>
     <div class="cards-list">
+      {% for p in active_projects %}
+      <div class="project-card">
 
-  {% for p in active_projects %}
+        <div class="project-thumb">
+          {% if p.image %}
+            <img src="{{ p.image.url }}" alt="{{ p.title }}"
+              style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
+          {% else %}
+            📁
+          {% endif %}
+        </div>
 
-  <a href="{% url 'project_detail' p.id %}" class="project-link">
-  <div class="project-card">
-      <h3>{{ p.title }}</h3>
-      <p>{{ p.description|truncatewords:20 }}</p>
+        <div class="project-info">
+          <div class="project-name">{{ p.title }}</div>
+          <div class="project-meta">
+            <span>💳 ${{ p.budget }}</span>
+            <span>📅 {{ p.deadline|date:"d M Y" }}</span>
+            <span>📊 {{ p.get_status_display }}</span>
+          </div>
+        </div>
 
-      <div class="project-meta">
-          <span>💰 ${{ p.budget }}</span>
-          <span>📅 {{ p.deadline }}</span>
+        <span class="badge badge-{{ p.status }}">{{ p.get_status_display }}</span>
+
+        <div class="project-amount" style="text-align:right;flex-shrink:0;">
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">Budget</div>
+          ${{ p.budget }}
+        </div>
+
+        <a href="{% url 'project_detail' p.id %}"
+          class="btn btn-ghost"
+          style="font-size:.8rem;padding:8px 16px;flex-shrink:0;"
+          onclick="event.stopPropagation()">
+          Details →
+        </a>
+
       </div>
-  </div>
-</a>
-
-  {% empty %}
-
-  <div class="empty-state">
-    <span class="empty-icon">📁</span>
-    <p>No active projects yet. Post your first job to receive proposals.</p>
-    <a href="{% url 'project_create' %}" class="btn btn-primary">Post a Job</a>
-  </div>
-
-  {% endfor %}
-
-</div>
+      {% empty %}
+      <div class="empty-state">
+        <span class="empty-icon">📁</span>
+        <p>No active projects yet. Post your first job to receive proposals.</p>
+        <a href="{% url 'project_create' %}" class="btn btn-primary">Post a Job</a>
+      </div>
+      {% endfor %}
+    </div>
     <div class="two-col">
       <div>
         <div class="section-header"><span class="section-title">Quick Actions</span></div>
         <div class="actions-grid">
           <a href="{% url 'project_create' %}" class="action-btn"><span>✏️</span> Post a Job</a>
           <a href="{% url 'freelancer_list' %}" class="action-btn"><span>🔍</span> Find Talent</a>
-          <a href="#" class="action-btn"><span>💬</span> Messages</a>
-          <a href="#" class="action-btn"><span>🧾</span> Invoices</a>
         </div>
       </div>
+
       <div>
         <div class="section-header"><span class="section-title">Recent Activity</span></div>
         <div class="card" style="padding:8px 16px;">

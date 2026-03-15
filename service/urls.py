@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import ProjectCreateView, MyProjectsView, ProjectDetailView, ProjectsView, ProjectDetailFreelancerView, \
     BidCreateView, BidDetailView, FreelancerBidListView, ProjectBidListView, ClientBidListView, AcceptBidView, \
-    ContractDetailView, FinishContractView, ReviewCreateView, ContractListView,SubmitWorkView,ProjectDeleteView,ProjectUpdateView,RejectBidView,FreelancerListView
+    ContractDetailView, FinishContractView, ReviewCreateView, ContractListView,SubmitWorkView,ProjectDeleteView,ProjectUpdateView,RejectBidView,FreelancerListView,ClientPaymentHistoryView,FreelancerEarningsHistoryView,FreelancerReviewsView,AboutView
 
 urlpatterns = [
     path("projects/create/", ProjectCreateView.as_view(), name="project_create"),
@@ -24,5 +24,8 @@ urlpatterns = [
     path("projects/<int:pk>/delete/", ProjectDeleteView.as_view(), name="project_delete"),
     path("bids/<int:bid_id>/reject/", RejectBidView.as_view(), name="reject_bid"),
     path("find-freelancers/", FreelancerListView.as_view(), name="freelancer_list"),
-
-]
+    path("client/payment-history/",ClientPaymentHistoryView.as_view(), name="client_payment_history"),
+    path("freelancer/earnings-history/",FreelancerEarningsHistoryView.as_view(),name="freelancer_earnings_history"),
+    path("freelancer/reviews/",FreelancerReviewsView.as_view(),name="freelancer_reviews"),
+    path("about/",AboutView.as_view(),name="about"),
+    ]
