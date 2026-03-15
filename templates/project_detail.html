@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .2s; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb span { color: var(--border); }
+
+  /* ── Hero image ── */
+  .project-hero {
+    width: 100%;
+    height: 320px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 28px;
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .project-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .project-hero-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,
+      rgba(79,142,247,.1) 0%,
+      rgba(167,139,250,.08) 100%);
+    color: var(--muted);
+    gap: 12px;
+  }
+
+  .project-hero-placeholder span { font-size: 3rem; opacity: .3; }
+  .project-hero-placeholder p    { font-size: 0.85rem; opacity: .5; }
+
+  /* Status badge over image */
+  .hero-status {
+    position: absolute;
+    top: 18px; left: 18px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    backdrop-filter: blur(10px);
+  }
+
+  .status-open        { background: rgba(34,197,94,.2);  color: #4ade80; border: 1px solid rgba(34,197,94,.4); }
+  .status-in_progress { background: rgba(79,142,247,.2);  color: #93c5fd; border: 1px solid rgba(79,142,247,.4); }
+  .status-completed   { background: rgba(240,192,96,.2);  color: #fcd34d; border: 1px solid rgba(240,192,96,.4); }
+  .status-cancelled   { background: rgba(107,114,128,.2); color: var(--muted); border: 1px solid rgba(107,114,128,.3); }
+
+  /* ── Title row ── */
+  .title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .title-block h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .title-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .action-btns {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ── Body grid ── */
+  .detail-body {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── Cards ── */
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 28px;
+    margin-bottom: 20px;
+    transition: border-color .2s;
+  }
+
+  .info-card:hover { border-color: rgba(79,142,247,.2); }
+  .info-card:last-child { margin-bottom: 0; }
+
+  .card-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Description */
+  .description-text {
+    color: var(--muted);
+    font-size: 0.925rem;
+    line-height: 1.85;
+    white-space: pre-line;
+  }
+
+  /* ── Stat row ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 16px;
+    text-align: center;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .stat-box:hover { border-color: rgba(79,142,247,.3); transform: translateY(-2px); }
+
+  .stat-box .s-icon { font-size: 1.2rem; margin-bottom: 8px; display: block; }
+
+  .stat-box .s-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-box .s-lbl {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  /* ── Field list in sidebar ── */
+  .field-list { display: flex; flex-direction: column; }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .field-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    text-align: right;
+  }
+
+  /* ── Danger zone ── */
+  .danger-zone {
+    background: rgba(239,68,68,.05);
+    border: 1px solid rgba(239,68,68,.2);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .danger-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #f87171;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .danger-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  /* Delete confirm modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    max-width: 420px;
+    width: 90%;
+    animation: popIn .25s ease;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(.92); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  .modal-icon { font-size: 2.5rem; margin-bottom: 16px; display: block; }
+
+  .modal-box h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .modal-box p {
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    margin-bottom: 28px;
+  }
+
+  .modal-actions { display: flex; gap: 12px; }
+
+  .btn-danger {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+  }
+
+  .btn-danger:hover { background: #dc2626; }
+
+  @media (max-width: 720px) {
+    .detail-body   { grid-template-columns: 1fr; }
+    .stat-row      { grid-template-columns: 1fr 1fr; }
+    .title-row     { flex-direction: column; }
+    .action-btns   { width: 100%; }
+    .action-btns .btn { flex: 1; justify-content: center; }
+    .project-hero  { height: 220px; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="detail-wrapper">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Dashboard</a>
+    <span>›</span>
+    <a href="{% url 'my_projects' %}">My Projects</a>
+    <span>›</span>
+    {{ project.title }}
+  </div>
+
+  <!-- Hero image -->
+  <div class="project-hero">
+    {% if project.image %}
+      <img src="{{ project.image.url }}" alt="{{ project.title }}">
+    {% else %}
+      <div class="project-hero-placeholder">
+        <span>🖼</span>
+        <p>No image uploaded</p>
+      </div>
+    {% endif %}
+    <span class="hero-status status-{{ project.status }}">
+      {{ project.get_status_display }}
+    </span>
+  </div>
+
+  <!-- Title + actions -->
+  <div class="title-row">
+    <div class="title-block">
+      <h1>{{ project.title }}</h1>
+      <div class="title-meta">
+        <span class="meta-item">📅 Posted {{ project.created_at|date:"d M Y" }}</span>
+        <span class="meta-item">⏳ Deadline {{ project.deadline|date:"d M Y" }}</span>
+        <span class="meta-item">💳 ${{ project.budget }}</span>
+      </div>
+    </div>
+    {% if project.status == 'open' %}
+    <div class="action-btns">
+      <a href="{% url 'project_update' project.pk %}" class="btn btn-outline" style="font-size:.875rem;padding:10px 20px;">
+        ✏️ Edit
+      </a>
+      <button class="btn btn-danger" onclick="openDelete()" style="font-size:.875rem;padding:10px 20px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+        🗑 Delete
+      </button>
+    </div>
+    {% else %}
+    <div class="action-btns">
+      <span style="font-size:.8rem;color:var(--muted);padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+        🔒 Cannot edit — project is {{ project.get_status_display }}
+      </span>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Key stats -->
+  <div class="stat-row">
+    <div class="stat-box">
+      <span class="s-icon">💳</span>
+      <div class="s-val">${{ project.budget }}</div>
+      <div class="s-lbl">Budget</div>
+    </div>
+    <div class="stat-box">
+      <span class="s-icon">📅</span>
+      <div class="s-val">{{ project.deadline|date:"d M" }}</div>
+      <div class="s-lbl">Deadline</div>
+    </div>
+    <div class="stat-box">
+      <span class="s-icon">📊</span>
+      <div class="s-val">{{ project.get_status_display }}</div>
+      <div class="s-lbl">Status</div>
+    </div>
+  </div>
+
+  <!-- Body grid -->
+  <div class="detail-body">
+
+    <!-- LEFT -->
+    <div>
+      <div class="info-card">
+        <div class="card-heading">📋 Description</div>
+        <p class="description-text">{{ project.description }}</p>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <div class="info-card">
+        <div class="card-heading">📌 Details</div>
+        <div class="field-list">
+          <div class="field-row">
+            <span class="field-label">💳 Budget</span>
+            <span class="field-value">${{ project.budget }}</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">📅 Deadline</span>
+            <span class="field-value">{{ project.deadline|date:"d M Y" }}</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">📊 Status</span>
+            <span class="field-value">{{ project.get_status_display }}</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">🕐 Posted</span>
+            <span class="field-value">{{ project.created_at|date:"d M Y" }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if project.status == 'open' %}
+      <!-- Danger zone -->
+      <div class="info-card" style="padding:20px;">
+        <div class="danger-zone">
+          <div class="danger-title">⚠ Danger Zone</div>
+          <p class="danger-desc">
+            Deleting this project is permanent and cannot be undone.
+            All associated data will be removed.
+          </p>
+          <button
+            class="btn btn-danger"
+            onclick="openDelete()"
+            style="width:100%;font-size:.85rem;padding:10px;border-radius:9px;cursor:pointer;"
+          >
+            🗑 Delete Project
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+      <a href="{% url 'my_projects' %}" class="btn btn-outline"
+        style="width:100%;justify-content:center;font-size:.875rem;padding:11px;">
+        ← Back to My Projects
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Delete confirmation modal ── -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <span class="modal-icon">🗑</span>
+    <h3>Delete this project?</h3>
+    <p>
+      You're about to permanently delete <strong>"{{ project.title }}"</strong>.
+      This action cannot be undone and all related data will be lost.
+    </p>
+    <div class="modal-actions">
+      <form method="post" action="{% url 'project_delete' project.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" style="width:100%;padding:12px;border-radius:10px;cursor:pointer;">
+          Yes, delete it
+        </button>
+      </form>
+      <button class="btn btn-outline" onclick="closeDelete()"
+        style="flex:1;padding:12px;">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  function openDelete()  { document.getElementById('deleteModal').classList.add('open'); }
+  function closeDelete() { document.getElementById('deleteModal').classList.remove('open'); }
+
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDelete();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDelete();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}My Bids · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bids-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Page header ── */
+  .page-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  .result-count {
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    white-space: nowrap;
+  }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color .2s;
+  }
+
+  .summary-card:hover { border-color: rgba(79,142,247,.25); }
+
+  .summary-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+
+  .summary-icon.yellow { background: rgba(240,192,96,.12); }
+  .summary-icon.green  { background: rgba(34,197,94,.12); }
+  .summary-icon.red    { background: rgba(239,68,68,.1); }
+
+  .summary-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .summary-lbl { font-size: 0.73rem; color: var(--muted); margin-top: 3px; }
+
+  /* ── Filter pills ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 7px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .18s;
+    font-family: inherit;
+  }
+
+  .filter-pill:hover  { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Bid card ── */
+  .bid-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 24px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .bid-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 18px 0 0 18px;
+    transition: opacity .2s;
+    opacity: 0;
+  }
+
+  .bid-card.pending::before  { background: #fcd34d; }
+  .bid-card.accepted::before { background: #4ade80; }
+  .bid-card.rejected::before { background: #f87171; }
+
+  .bid-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 36px rgba(0,0,0,.25);
+  }
+
+  .bid-card.pending:hover  { border-color: rgba(240,192,96,.35); }
+  .bid-card.accepted:hover { border-color: rgba(34,197,94,.35); }
+  .bid-card.rejected:hover { border-color: rgba(239,68,68,.3); }
+  .bid-card:hover::before  { opacity: 1; }
+
+  /* Project thumbnail */
+  .bid-thumb {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  .bid-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Middle info */
+  .bid-info { flex: 1; min-width: 0; }
+
+  .bid-project {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+
+  .bid-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .bid-meta span {
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Price */
+  .bid-price {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .price-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .price-lbl {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  /* Status badge */
+  .bid-status {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .bid-status.pending  { background: rgba(240,192,96,.12); color: #fcd34d; border: 1px solid rgba(240,192,96,.3); }
+  .bid-status.accepted { background: rgba(34,197,94,.12);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+  .bid-status.rejected { background: rgba(239,68,68,.1);   color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+
+  /* Arrow */
+  .bid-arrow {
+    color: var(--muted);
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: transform .18s, color .18s;
+  }
+
+  .bid-card:hover .bid-arrow { transform: translateX(4px); color: var(--accent); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 32px;
+    border: 1px dashed var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+  }
+
+  .empty-state .e-icon { font-size: 3rem; display: block; margin-bottom: 16px; opacity: .35; }
+
+  .empty-state h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin-bottom: 28px;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.65;
+  }
+
+  @media (max-width: 640px) {
+    .bids-wrapper  { padding: 32px 16px; }
+    .summary-bar   { grid-template-columns: 1fr 1fr; }
+    .bid-card      { flex-wrap: wrap; gap: 14px; }
+    .bid-price     { text-align: left; }
+    .page-top      { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="bids-wrapper">
+
+  <!-- Page header -->
+  <div class="page-top">
+    <div>
+      <h1>My Bids</h1>
+      <p>Track the status of all your submitted proposals.</p>
+    </div>
+    <span class="result-count">{{ bids|length }} bid{{ bids|length|pluralize }} total</span>
+  </div>
+
+  {% if bids %}
+
+  <!-- Summary bar -->
+  <div class="summary-bar">
+    <div class="summary-card">
+      <div class="summary-icon yellow">⏳</div>
+      <div>
+        <div class="summary-val" id="countPending">—</div>
+        <div class="summary-lbl">Pending</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon green">✅</div>
+      <div>
+        <div class="summary-val" id="countAccepted">—</div>
+        <div class="summary-lbl">Accepted</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon red">❌</div>
+      <div>
+        <div class="summary-val" id="countRejected">—</div>
+        <div class="summary-lbl">Rejected</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter pills -->
+  <div class="filter-bar">
+    <button class="filter-pill active" onclick="filterBids(this, 'all')">All</button>
+    <button class="filter-pill" onclick="filterBids(this, 'pending')">⏳ Pending</button>
+    <button class="filter-pill" onclick="filterBids(this, 'accepted')">✅ Accepted</button>
+    <button class="filter-pill" onclick="filterBids(this, 'rejected')">❌ Rejected</button>
+  </div>
+
+  {% endif %}
+
+  <!-- Bid list -->
+  <div id="bidsList">
+    {% for bid in bids %}
+    <a
+      href="{% url 'bid_detail' bid.pk %}"
+      class="bid-card {{ bid.status }}"
+      data-status="{{ bid.status }}"
+    >
+      <!-- Thumbnail -->
+      <div class="bid-thumb">
+        {% if bid.project.image %}
+          <img src="{{ bid.project.image.url }}" alt="{{ bid.project.title }}">
+        {% else %}
+          📁
+        {% endif %}
+      </div>
+
+      <!-- Info -->
+      <div class="bid-info">
+        <div class="bid-project">{{ bid.project.title }}</div>
+        <div class="bid-meta">
+          <span>💳 ${{ bid.price }}</span>
+          <span>🕐 {{ bid.created_at|date:"d M Y" }}</span>
+        </div>
+      </div>
+
+      <!-- Status badge -->
+      <span class="bid-status {{ bid.status }}">
+        {% if bid.status == 'accepted' %}✓
+        {% elif bid.status == 'rejected' %}✕
+        {% else %}⏳
+        {% endif %}
+        {{ bid.status|capfirst }}
+      </span>
+
+      <!-- Price -->
+      <div class="bid-price">
+        <div class="price-val">${{ bid.price }}</div>
+        <div class="price-lbl">Your bid</div>
+      </div>
+
+      <span class="bid-arrow">→</span>
+    </a>
+
+    {% empty %}
+    <div class="empty-state">
+      <span class="e-icon">📭</span>
+      <h3>No bids yet</h3>
+      <p>You haven't sent any bids yet. Browse open projects and submit your first proposal.</p>
+      <a href="#" class="btn btn-primary">Browse Projects</a>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  // Filter by status
+  function filterBids(btn, status) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.bid-card').forEach(card => {
+      card.style.display =
+        (status === 'all' || card.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  // Count statuses for summary bar
+  document.addEventListener('DOMContentLoaded', function() {
+    const cards    = document.querySelectorAll('.bid-card');
+    const counts   = { pending: 0, accepted: 0, rejected: 0 };
+    cards.forEach(c => { if (counts[c.dataset.status] !== undefined) counts[c.dataset.status]++; });
+    document.getElementById('countPending')  && (document.getElementById('countPending').textContent  = counts.pending);
+    document.getElementById('countAccepted') && (document.getElementById('countAccepted').textContent = counts.accepted);
+    document.getElementById('countRejected') && (document.getElementById('countRejected').textContent = counts.rejected);
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+{% block title %}Profile · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Cover + Avatar hero ── */
+  .profile-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .profile-cover {
+    height: 160px;
+    background: linear-gradient(135deg,
+      rgba(79,142,247,.25) 0%,
+      rgba(167,139,250,.2) 50%,
+      rgba(79,142,247,.1) 100%);
+    position: relative;
+  }
+
+  .profile-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234f8ef7' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .profile-info-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 0 28px 24px;
+  }
+
+  .profile-avatar-wrap {
+    margin-top: -48px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--surface);
+    box-shadow: 0 0 0 3px var(--accent);
+    display: block;
+  }
+
+  .profile-avatar-placeholder {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    border: 3px solid var(--surface);
+    box-shadow: 0 0 0 3px var(--accent);
+  }
+
+  .profile-main-info { flex: 1; min-width: 200px; padding-top: 12px; }
+
+  .profile-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+  }
+
+  .profile-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .role-client     { background: rgba(240,192,96,.12); color: #fcd34d; border: 1px solid rgba(240,192,96,.25); }
+  .role-freelancer { background: rgba(79,142,247,.12);  color: #93c5fd; border: 1px solid rgba(79,142,247,.25); }
+
+  .joined-date {
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .profile-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* ── Body grid ── */
+  .profile-body {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+  }
+
+  /* ── Cards ── */
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 28px;
+    margin-bottom: 20px;
+  }
+
+  .info-card:last-child { margin-bottom: 0; }
+
+  .card-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Bio */
+  .bio-text {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
+  .bio-empty {
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-style: italic;
+    opacity: 0.6;
+  }
+
+  /* Fields table */
+  .field-list { display: flex; flex-direction: column; gap: 0; }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .field-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    text-align: right;
+  }
+
+  /* Edit form */
+  .edit-form { display: none; }
+  .edit-form.open { display: block; }
+  .view-mode.hidden { display: none; }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  /* Avatar upload area */
+  .avatar-upload {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .avatar-upload-thumb {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+  }
+
+  .avatar-upload-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-upload-thumb .avatar-placeholder-sm {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.2rem; color: #fff;
+  }
+
+  .upload-info { flex: 1; }
+  .upload-info p { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+  input[type="file"] {
+    font-size: 0.82rem;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  /* Sidebar stat cards */
+  .stat-mini {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-mini:last-child { border-bottom: none; }
+
+  .stat-mini-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+
+  .stat-mini-icon.blue   { background: rgba(79,142,247,.12); }
+  .stat-mini-icon.purple { background: rgba(167,139,250,.12); }
+  .stat-mini-icon.green  { background: rgba(34,197,94,.12); }
+  .stat-mini-icon.gold   { background: rgba(240,192,96,.12); }
+
+  .stat-mini-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .stat-mini-lbl { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
+
+  @media (max-width: 720px) {
+    .profile-body { grid-template-columns: 1fr; }
+    .profile-info-row { flex-direction: column; align-items: flex-start; }
+    .profile-actions { width: 100%; }
+    .profile-actions .btn { flex: 1; justify-content: center; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="profile-wrapper">
+
+
+
+  <!-- ── HERO ── -->
+  <div class="profile-hero">
+    <div class="profile-cover"></div>
+
+    <div class="profile-info-row">
+
+      <div class="profile-avatar-wrap">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="avatar" class="profile-avatar">
+        {% else %}
+          <div class="profile-avatar-placeholder">
+            {{ profile.username|first|upper }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="profile-main-info">
+        <div class="profile-name">{{ profile.get_full_name|default:profile.username }}</div>
+        <div class="profile-meta">
+          <span class="role-badge {% if profile.role == 'client' %}role-client{% else %}role-freelancer{% endif %}">
+            {% if profile.role == 'client' %}🏢{% else %}💼{% endif %}
+            {{ profile.get_role_display }}
+          </span>
+          <span class="joined-date">📅 Joined {{ profile.created_at|date:"M Y" }}</span>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn btn-outline" onclick="toggleEdit()" id="editBtn">✏️ Edit Profile</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── BODY ── -->
+  <div class="profile-body">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- VIEW MODE -->
+      <div class="info-card view-mode" id="viewMode">
+        <div class="card-heading">👤 About</div>
+
+        <div class="bio-text">
+          {% if profile.bio %}
+            {{ profile.bio }}
+          {% else %}
+            <span class="bio-empty">No bio added yet.</span>
+          {% endif %}
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div class="card-heading">📋 Details</div>
+          <div class="field-list">
+            <div class="field-row">
+              <span class="field-label">📧 Email</span>
+              <span class="field-value">{{ profile.email }}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">👤 Username</span>
+              <span class="field-value">@{{ profile.username }}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">🪪 Role</span>
+              <span class="field-value">{{ profile.get_role_display }}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">📅 Member since</span>
+              <span class="field-value">{{ profile.created_at|date:"d M Y" }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT MODE -->
+      <div class="info-card edit-form" id="editForm">
+        <div class="card-heading">✏️ Edit Profile</div>
+
+        <form method="post" enctype="multipart/form-data" action="#">
+          {% csrf_token %}
+
+          <!-- Avatar upload -->
+          <div class="avatar-upload">
+            <div class="avatar-upload-thumb">
+              {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" alt="avatar">
+              {% else %}
+                <div class="avatar-placeholder-sm">{{ profile.username|first|upper }}</div>
+              {% endif %}
+            </div>
+            <div class="upload-info">
+              <label style="margin-bottom:6px;">Profile Photo</label>
+              <input type="file" name="avatar" accept="image/*">
+              <p>JPG, PNG or GIF · Max 2MB</p>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:16px;">
+            <label>First Name</label>
+            <input type="text" name="first_name" value="{{ profile.first_name }}" placeholder="First name">
+          </div>
+
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" name="last_name" value="{{ profile.last_name }}" placeholder="Last name">
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" value="{{ profile.email }}" placeholder="Email address">
+          </div>
+
+          <div class="form-group">
+            <label>Bio</label>
+            <textarea name="bio" rows="4" placeholder="Tell people about yourself…" style="resize:vertical;">{{ profile.bio }}</textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <button type="button" class="btn btn-outline" onclick="toggleEdit()">Cancel</button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+
+      <!-- Stats — real context variables from ProfileView -->
+      <div class="info-card" style="margin-bottom:20px;">
+        <div class="card-heading">📊 Stats
+          <span style="font-size:.65rem;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:4px;font-weight:400;">
+            ({{ profile.role }})
+          </span>
+        </div>
+
+        {% with role=profile.role %}
+        {% if role == 'freelancer' %}
+
+        <div class="stat-mini">
+          <div class="stat-mini-icon green">💵</div>
+          <div>
+            <div class="stat-mini-val">${{ total_earnings }}</div>
+            <div class="stat-mini-lbl">Total earned</div>
+          </div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon blue">📋</div>
+          <div>
+            <div class="stat-mini-val">{{ active_contracts }}</div>
+            <div class="stat-mini-lbl">Active contracts</div>
+          </div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon purple">📨</div>
+          <div>
+            <div class="stat-mini-val">{{ open_proposals }}</div>
+            <div class="stat-mini-lbl">Open proposals</div>
+          </div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon gold">⭐</div>
+          <div>
+            <div class="stat-mini-val">{% if avg_rating %}{{ avg_rating }}{% else %}—{% endif %}</div>
+            <div class="stat-mini-lbl">Avg. rating</div>
+          </div>
+        </div>
+
+        {% else %}
+
+        <div class="stat-mini">
+          <div class="stat-mini-icon blue">📁</div>
+          <div>
+            <div class="stat-mini-val">{{ count|default:0 }}</div>
+            <div class="stat-mini-lbl">Active projects</div>
+          </div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon green">💳</div>
+          <div>
+            <div class="stat-mini-val">${{ total_spend|default:0 }}</div>
+            <div class="stat-mini-lbl">Total spent</div>
+          </div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon purple">📨</div>
+          <div>
+            <div class="stat-mini-val">{{ pending_proposals|default:0 }}</div>
+            <div class="stat-mini-lbl">Pending proposals</div>
+          </div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon gold">✅</div>
+          <div>
+            <div class="stat-mini-val">{{ completed|default:0 }}</div>
+            <div class="stat-mini-lbl">Completed projects</div>
+          </div>
+        </div>
+
+        {% endif %}
+        {% endwith %}
+
+      </div>
+
+      <!-- Account info -->
+      <div class="info-card">
+        <div class="card-heading">🔒 Account</div>
+        <div class="field-list">
+          <div class="field-row">
+            <span class="field-label">Status</span>
+            <span class="field-value" style="color:#4ade80;">● Active</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Role</span>
+            <span class="field-value">{{ profile.get_role_display }}</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Joined</span>
+            <span class="field-value">{{ profile.created_at|date:"d M Y" }}</span>
+          </div>
+        </div>
+        <div style="margin-top:18px;display:flex;flex-direction:column;gap:8px;">
+          <a href="#" class="btn btn-outline" style="font-size:.82rem;padding:9px 16px;">🔑 Change password</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  function toggleEdit() {
+    const view    = document.getElementById('viewMode');
+    const form    = document.getElementById('editForm');
+    const editBtn = document.getElementById('editBtn');
+    const isOpen  = form.classList.contains('open');
+
+    if (isOpen) {
+      form.classList.remove('open');
+      view.classList.remove('hidden');
+      editBtn.textContent = '✏️ Edit Profile';
+    } else {
+      form.classList.add('open');
+      view.classList.add('hidden');
+      editBtn.textContent = '✕ Cancel';
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+{% block title %}Contract · {{ contract.project.title }} · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .2s; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb span { color: var(--border); }
+
+  /* ── Status banner ── */
+  .status-banner {
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 28px;
+    border: 1px solid;
+    flex-wrap: wrap;
+  }
+
+  .status-banner.active   { background: rgba(79,142,247,.07);  border-color: rgba(79,142,247,.25); }
+  .status-banner.finished { background: rgba(34,197,94,.07);   border-color: rgba(34,197,94,.25); }
+
+  .banner-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+
+  .active   .banner-icon { background: rgba(79,142,247,.15); }
+  .finished .banner-icon { background: rgba(34,197,94,.15); }
+
+  .banner-text h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .active   .banner-text h3 { color: #93c5fd; }
+  .finished .banner-text h3 { color: #4ade80; }
+
+  .banner-text p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  .banner-badge {
+    margin-left: auto;
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .active   .banner-badge { background: rgba(79,142,247,.15); color: #93c5fd; border: 1px solid rgba(79,142,247,.3); }
+  .finished .banner-badge { background: rgba(34,197,94,.15);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+
+  /* ── Title row ── */
+  .title-row {
+    margin-bottom: 28px;
+  }
+
+  .title-row h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .title-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .meta-chip { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+
+  /* ── Stat boxes ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 16px;
+    text-align: center;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .stat-box:hover { border-color: rgba(79,142,247,.3); transform: translateY(-2px); }
+  .stat-box .s-ico { font-size: 1.2rem; margin-bottom: 8px; display: block; }
+
+  .stat-box .s-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-box .s-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+
+  /* ── Layout ── */
+  .detail-body {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── Cards ── */
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 28px;
+    margin-bottom: 20px;
+    transition: border-color .2s;
+  }
+
+  .info-card:last-child { margin-bottom: 0; }
+  .info-card:hover { border-color: rgba(79,142,247,.2); }
+
+  .card-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .field-list { display: flex; flex-direction: column; }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .field-value { font-size: 0.875rem; font-weight: 500; color: var(--text); text-align: right; }
+
+  /* ── Parties ── */
+  .parties-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+
+  .party-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .party-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: .9rem; color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(79,142,247,.3);
+  }
+
+  .party-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .party-name { font-size: 0.875rem; font-weight: 600; }
+  .party-role { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── Submissions ── */
+  .submission-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .submission-item:last-child { margin-bottom: 0; }
+
+  .sub-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: rgba(79,142,247,.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+
+  .sub-info { flex: 1; min-width: 0; }
+  .sub-message { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; line-height: 1.6; }
+
+  .sub-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sub-date { font-size: 0.72rem; color: var(--muted); }
+
+  .sub-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    background: rgba(79,142,247,.1);
+    border: 1px solid rgba(79,142,247,.25);
+    border-radius: 8px;
+    color: #93c5fd;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .18s;
+  }
+
+  .sub-download:hover { background: rgba(79,142,247,.2); }
+
+  /* ── Finish contract ── */
+  .finish-zone {
+    background: rgba(34,197,94,.06);
+    border: 1px solid rgba(34,197,94,.2);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .finish-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #4ade80;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 8px;
+  }
+
+  .finish-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+
+  /* Review box */
+  .review-box {
+    background: rgba(167,139,250,.07);
+    border: 1px solid rgba(167,139,250,.2);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .review-stars { font-size: 1.1rem; margin-bottom: 6px; }
+
+  .review-comment {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.65;
+    font-style: italic;
+  }
+
+  .review-by { font-size: 0.72rem; color: var(--muted); margin-top: 8px; }
+
+  /* Sticky sidebar */
+  .sidebar-sticky {
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
+  }
+
+  @media (max-width: 720px) {
+    .detail-body    { grid-template-columns: 1fr; }
+    .sidebar-sticky { position: static; }
+    .stat-row       { grid-template-columns: 1fr 1fr; }
+    .parties-row    { grid-template-columns: 1fr; }
+    .detail-wrapper { padding: 32px 16px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-wrapper">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Dashboard</a>
+    <span>›</span>
+    <a href="{% url 'contract_list' %}">Contracts</a>
+    <span>›</span>
+    {{ contract.project.title }}
+  </div>
+
+  <!-- Status banner -->
+  <div class="status-banner {{ contract.status }}">
+    <div class="banner-icon">
+      {% if contract.status == 'finished' %}✅{% else %}⚡{% endif %}
+    </div>
+    <div class="banner-text">
+      {% if contract.status == 'finished' %}
+        <h3>Contract Completed</h3>
+        <p>This contract was finished on {{ contract.finished_at|date:"d M Y" }}.</p>
+      {% else %}
+        <h3>Contract In Progress</h3>
+        <p>Work is underway. The freelancer can submit their work below.</p>
+      {% endif %}
+    </div>
+    <span class="banner-badge">{{ contract.status|capfirst }}</span>
+  </div>
+
+  <!-- Title -->
+  <div class="title-row">
+    <h1>{{ contract.project.title }}</h1>
+    <div class="title-meta">
+      <span class="meta-chip">📅 Started {{ contract.created_at|date:"d M Y" }}</span>
+      <span class="meta-chip">💳 ${{ contract.agreed_price }}</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row">
+    <div class="stat-box">
+      <span class="s-ico">💳</span>
+      <div class="s-val">${{ contract.agreed_price }}</div>
+      <div class="s-lbl">Contract Value</div>
+    </div>
+    <div class="stat-box">
+      <span class="s-ico">📅</span>
+      <div class="s-val">{{ contract.project.deadline|date:"d M" }}</div>
+      <div class="s-lbl">Deadline</div>
+    </div>
+    <div class="stat-box">
+      <span class="s-ico">📦</span>
+      <div class="s-val">{{ contract.submissions.count }}</div>
+      <div class="s-lbl">Submissions</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="detail-body">
+
+    <!-- LEFT -->
+    <div>
+
+      <!-- Parties -->
+      <div class="info-card">
+        <div class="card-heading">👥 Parties</div>
+        <div class="parties-row">
+          <div class="party-card">
+            <div class="party-avatar">
+              {% if contract.client.avatar %}
+                <img src="{{ contract.client.avatar.url }}" alt="{{ contract.client.username }}">
+              {% else %}
+                {{ contract.client.username|first|upper }}
+              {% endif %}
+            </div>
+            <div>
+              <div class="party-name">{{ contract.client.username }}</div>
+              <div class="party-role">🏢 Client</div>
+            </div>
+          </div>
+          <div class="party-card">
+            <div class="party-avatar">
+              {% if contract.freelancer.avatar %}
+                <img src="{{ contract.freelancer.avatar.url }}" alt="{{ contract.freelancer.username }}">
+              {% else %}
+                {{ contract.freelancer.username|first|upper }}
+              {% endif %}
+            </div>
+            <div>
+              <div class="party-name">{{ contract.freelancer.username }}</div>
+              <div class="party-role">💼 Freelancer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submissions -->
+      <div class="info-card">
+        <div class="card-heading">📦 Submissions</div>
+
+        {% if contract.submissions.all %}
+          {% for sub in contract.submissions.all %}
+          <div class="submission-item">
+            <div class="sub-icon">📎</div>
+            <div class="sub-info">
+              {% if sub.message %}
+                <div class="sub-message">{{ sub.message }}</div>
+              {% endif %}
+              <div class="sub-footer">
+                <span class="sub-date">🕐 {{ sub.created_at|date:"d M Y, H:i" }}</span>
+                <a href="{{ sub.file.url }}" class="sub-download" download>⬇ Download file</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:var(--muted);font-size:.875rem;text-align:center;padding:20px 0;">
+            No submissions yet.
+          </p>
+        {% endif %}
+
+        {# Freelancer can submit work #}
+        {% if request.user == contract.freelancer and contract.status == 'active' %}
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <a href="{% url 'submit_work' contract.id %}" class="btn btn-primary"
+            style="width:100%;justify-content:center;font-size:.875rem;padding:11px;">
+            📤 Submit Work
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      {# Review section — shown if contract finished and review exists #}
+      {% if contract.status == 'finished' %}
+        {% if contract.review %}
+        <div class="info-card">
+          <div class="card-heading">⭐ Review</div>
+          <div class="review-box">
+            <div class="review-stars">
+              {% for i in "12345" %}
+                {% if forloop.counter <= contract.review.rating %}⭐{% else %}☆{% endif %}
+              {% endfor %}
+            </div>
+            <div class="review-comment">"{{ contract.review.comment }}"</div>
+            <div class="review-by">— {{ contract.client.username }}, {{ contract.review.created_at|date:"d M Y" }}</div>
+          </div>
+        </div>
+        {% endif %}
+      {% endif %}
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar-sticky">
+
+      <!-- Contract info -->
+      <div class="info-card" style="margin-bottom:16px;">
+        <div class="card-heading">📋 Details</div>
+        <div class="field-list">
+          <div class="field-row">
+            <span class="field-label">📁 Project</span>
+            <span class="field-value">{{ contract.project.title }}</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">💳 Value</span>
+            <span class="field-value" style="font-weight:700;">${{ contract.agreed_price }}</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">📅 Started</span>
+            <span class="field-value">{{ contract.created_at|date:"d M Y" }}</span>
+          </div>
+          {% if contract.finished_at %}
+          <div class="field-row">
+            <span class="field-label">🏁 Finished</span>
+            <span class="field-value">{{ contract.finished_at|date:"d M Y" }}</span>
+          </div>
+          {% endif %}
+          <div class="field-row">
+            <span class="field-label">📊 Status</span>
+            <span class="field-value">{{ contract.status|capfirst }}</span>
+          </div>
+        </div>
+      </div>
+
+      {# ── CLIENT ONLY ACTIONS ── #}
+      {% if request.user == contract.client %}
+
+        {% if contract.status == 'active' %}
+        {# Finish contract #}
+        <div class="finish-zone">
+          <div class="finish-title">✅ Mark as Finished</div>
+          <p class="finish-desc">
+            Only press this after reviewing the freelancer's submission and confirming the work is complete.
+          </p>
+          <form method="post" action="{% url 'finish_contract' contract.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary"
+              style="width:100%;justify-content:center;font-size:.875rem;padding:11px;background:rgba(34,197,94,.85);"
+              onclick="return confirm('Are you sure you want to mark this contract as finished?')">
+              🏁 Finish Contract
+            </button>
+          </form>
+        </div>
+
+        {% elif contract.status == 'finished' %}
+
+          {% if not contract.review %}
+          {# Leave review #}
+          <div class="info-card" style="text-align:center;margin-bottom:16px;">
+            <div class="card-heading">⭐ Leave a Review</div>
+            <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:16px;">
+              Share your experience working with {{ contract.freelancer.username }}.
+            </p>
+            <a href="{% url 'create_review' contract.id %}" class="btn btn-primary"
+              style="width:100%;justify-content:center;font-size:.875rem;padding:11px;">
+              ⭐ Write Review
+            </a>
+          </div>
+          {% else %}
+          <div class="info-card" style="text-align:center;margin-bottom:16px;">
+            <p style="font-size:.82rem;color:#4ade80;">✓ Review submitted</p>
+          </div>
+          {% endif %}
+
+        {% endif %}
+
+      {% endif %}
+
+      <a href="{% url 'contract_list' %}" class="btn btn-outline"
+        style="width:100%;justify-content:center;font-size:.875rem;padding:11px;">
+        ← Back to Contracts
+      </a>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

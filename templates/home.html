@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+{% block title %}Home · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+
+  /* ═══════════════════════════════════════════
+     AUTHENTICATED  —  DASHBOARD
+  ═══════════════════════════════════════════ */
+  .dash-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - var(--nav-h));
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 28px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: sticky;
+    top: var(--nav-h);
+    height: calc(100vh - var(--nav-h));
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 16px 12px 6px;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all .18s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-item.active { background: rgba(79,142,247,.1); color: var(--accent); }
+  .sidebar-item .icon { font-size: 1rem; width: 22px; text-align: center; }
+
+  .sidebar-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 100px;
+    padding: 2px 7px;
+  }
+
+  /* Avatar + logout at bottom of sidebar */
+  .sidebar-footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+
+  .user-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+    flex-shrink: 0;
+  }
+
+  .user-avatar-placeholder {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1rem; color: #fff;
+    flex-shrink: 0;
+    border: 2px solid rgba(79,142,247,.4);
+  }
+
+  .user-info { min-width: 0; }
+  .user-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 0.72rem; color: var(--muted); text-transform: capitalize; }
+
+  /* ✅ The logout button — styled as a red sidebar item */
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #f87171;
+    background: rgba(239,68,68,.06);
+    border: 1px solid rgba(239,68,68,.15);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .18s;
+  }
+
+  .logout-btn:hover { background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.35); }
+
+  /* ── Main content ── */
+  .dash-content { padding: 40px; overflow-y: auto; }
+
+  .page-header { margin-bottom: 36px; }
+
+  .page-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9rem; font-weight: 800;
+    letter-spacing: -0.5px; margin-bottom: 4px;
+  }
+
+  .page-header p { color: var(--muted); font-size: 0.9rem; }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px; margin-bottom: 36px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px 24px;
+    position: relative; overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .stat-card:hover { border-color: rgba(79,142,247,.3); transform: translateY(-2px); }
+
+  .stat-card::after {
+    content: ''; position: absolute;
+    top: 0; right: 0; width: 80px; height: 80px;
+    border-radius: 0 16px 0 80px; opacity: 0.07;
+  }
+
+  .stat-card:nth-child(1)::after { background: var(--accent); }
+  .stat-card:nth-child(2)::after { background: var(--accent2); }
+  .stat-card:nth-child(3)::after { background: var(--gold); }
+  .stat-card:nth-child(4)::after { background: var(--success); }
+
+  .stat-icon  { font-size: 1.3rem; margin-bottom: 12px; display: block; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 1.9rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 0.78rem; color: var(--muted); }
+
+  /* Section header */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; }
+
+  /* Cards list */
+  .cards-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 36px; }
+
+  .project-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 22px;
+    display: flex; align-items: center; gap: 18px;
+    transition: border-color .2s, background .2s;
+  }
+
+  .project-card:hover { border-color: rgba(79,142,247,.3); background: var(--surface2); }
+
+  .project-thumb {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+
+  .project-info { flex: 1; min-width: 0; }
+  .project-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .project-meta { font-size: 0.78rem; color: var(--muted); }
+  .project-meta span { margin-right: 14px; }
+
+  .badge { padding: 4px 12px; border-radius: 100px; font-size: 0.72rem; font-weight: 600; flex-shrink: 0; }
+  .badge-active { background: rgba(34,197,94,.12); color: #4ade80; border: 1px solid rgba(34,197,94,.25); }
+  .badge-open   { background: rgba(79,142,247,.12); color: #93c5fd; border: 1px solid rgba(79,142,247,.25); }
+
+  .project-amount { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; }
+
+  /* Two-col grid */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* Quick actions */
+  .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .action-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 12px;
+    font-size: 0.85rem; font-weight: 500;
+    color: var(--text); text-decoration: none;
+    transition: all .18s;
+  }
+
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,.06); }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 40px 24px; color: var(--muted); }
+  .empty-state .empty-icon { font-size: 2.2rem; margin-bottom: 12px; display: block; opacity: .4; }
+  .empty-state p { font-size: 0.88rem; margin-bottom: 18px; }
+
+  @media (max-width: 900px) {
+    .dash-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .two-col { grid-template-columns: 1fr; }
+    .dash-content { padding: 24px 20px; }
+  }
+
+
+  /* ═══════════════════════════════════════════
+     UNAUTHENTICATED  —  LANDING PAGE
+  ═══════════════════════════════════════════ */
+  .landing {
+    min-height: calc(100vh - var(--nav-h));
+    display: flex; flex-direction: column;
+  }
+
+  .hero {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 100px 24px 60px;
+    position: relative; overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 600px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(79,142,247,.14) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(79,142,247,.1); border: 1px solid rgba(79,142,247,.25);
+    border-radius: 100px; padding: 6px 18px;
+    font-size: 0.78rem; font-weight: 600; color: var(--accent);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 28px; position: relative; z-index: 1;
+  }
+
+  .pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #22c55e; box-shadow: 0 0 8px #22c55e;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .hero-headline {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.6rem, 6vw, 4.5rem);
+    font-weight: 800; line-height: 1.1; letter-spacing: -1.5px;
+    max-width: 700px; margin-bottom: 22px;
+    position: relative; z-index: 1;
+  }
+
+  .hero-headline .accent { color: var(--accent); }
+
+  .hero-sub {
+    font-size: 1.05rem; color: var(--muted);
+    max-width: 500px; line-height: 1.75; margin-bottom: 44px;
+    position: relative; z-index: 1;
+  }
+
+  .hero-cta {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    justify-content: center; position: relative; z-index: 1;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex; justify-content: center;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .stats-bar-item {
+    flex: 1; max-width: 220px; text-align: center;
+    padding: 28px 20px; border-right: 1px solid var(--border);
+  }
+
+  .stats-bar-item:last-child { border-right: none; }
+
+  .stats-bar-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
+  .stats-bar-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* Features */
+  .features { padding: 80px 40px; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+  .features-title {
+    font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+    text-align: center; margin-bottom: 48px; letter-spacing: -0.5px;
+  }
+
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+  .feature-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 28px;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .feature-card:hover { border-color: rgba(79,142,247,.3); transform: translateY(-3px); }
+  .feature-icon  { font-size: 2rem; margin-bottom: 16px; display: block; }
+  .feature-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+  .feature-desc  { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
+
+  /* CTA banner */
+  .cta-banner {
+    margin: 0 40px 80px;
+    background: linear-gradient(135deg, rgba(79,142,247,.12) 0%, rgba(167,139,250,.08) 100%);
+    border: 1px solid rgba(79,142,247,.2); border-radius: 24px;
+    padding: 60px 40px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+
+  .cta-banner h2 {
+    font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800;
+    margin-bottom: 12px; letter-spacing: -0.5px; position: relative; z-index: 1;
+  }
+
+  .cta-banner p { color: var(--muted); margin-bottom: 32px; font-size: 0.95rem; position: relative; z-index: 1; }
+
+  .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+
+  @media (max-width: 640px) {
+    .hero-headline { font-size: 2.2rem; }
+    .stats-bar { flex-wrap: wrap; }
+    .stats-bar-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .features, .cta-banner { padding: 48px 20px; margin: 0 0 40px; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+{% if user.is_authenticated %}
+<!-- ╔═══════════════════════════════════════════════╗
+     ║              DASHBOARD                        ║
+     ╚═══════════════════════════════════════════════╝ -->
+<div class="dash-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    {% if user.role == 'freelancer' %}
+      <span class="sidebar-section">Main</span>
+      <a href="{% url 'home' %}" class="sidebar-item active"><span class="icon">⚡</span> Overview</a>
+      <a href="{% url 'project_list' %}" class="sidebar-item"><span class="icon">🔍</span> Browse Jobs</a>
+      <a href="{% url 'freelancer_bid_list' %}" class="sidebar-item"><span class="icon">📋</span> My Proposals</a>
+      <a href="{% url 'contract_list' %}" class="sidebar-item"><span class="icon">💼</span> Active Contracts</a>
+      <a href="#" class="sidebar-item"><span class="icon">✅</span> Completed</a>
+      <span class="sidebar-section">Earnings</span>
+      <a href="#" class="sidebar-item"><span class="icon">💵</span> Earnings</a>
+      <a href="#" class="sidebar-item"><span class="icon">📊</span> Reports</a>
+      <a href="#" class="sidebar-item"><span class="icon">🏦</span> Withdraw</a>
+      <span class="sidebar-section">Account</span>
+      <a href="#" class="sidebar-item"><span class="icon">👤</span> My Profile</a>
+      <a href="#" class="sidebar-item"><span class="icon">🔔</span> Notifications <span class="sidebar-badge">3</span></a>
+      <a href="#" class="sidebar-item"><span class="icon">⚙️</span> Settings</a>
+    {% else %}
+      <span class="sidebar-section">Main</span>
+      <a href="{% url 'home' %}" class="sidebar-item active"><span class="icon">⚡</span> Overview</a>
+      <a href="{% url 'my_projects' %}" class="sidebar-item"><span class="icon">📁</span> My Projects</a>
+      <a href="{% url 'freelancer_list' %}" class="sidebar-item"><span class="icon">🔍</span> Find Freelancers</a>
+<a href="{% url 'client_bid_list' %}" class="sidebar-item">
+    <span class="icon">📨</span> Proposals
+</a>      <a href="{% url 'contract_list' %}" class="sidebar-item"><span class="icon">💬</span> Contracts</a>
+      <span class="sidebar-section">Billing</span>
+      <a href="#" class="sidebar-item"><span class="icon">💳</span> Payments</a>
+      <a href="#" class="sidebar-item"><span class="icon">🧾</span> Invoices</a>
+      <span class="sidebar-section">Account</span>
+      <a href="#" class="sidebar-item"><span class="icon">🏢</span> Company Profile</a>
+      <a href="#" class="sidebar-item"><span class="icon">🔔</span> Notifications</a>
+      <a href="#" class="sidebar-item"><span class="icon">⚙️</span> Settings</a>
+    {% endif %}
+
+    <!-- USER CARD + LOGOUT -->
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        {% if user.avatar %}
+          <img src="{{ user.avatar.url }}" alt="avatar" class="user-avatar">
+        {% else %}
+          <div class="user-avatar-placeholder">{{ user.username|first|upper }}</div>
+        {% endif %}
+        <div class="user-info">
+          <div class="user-name">{{ user.username }}</div>
+          <a href="{% url 'profile' %}" class="user-role">{{ user.role|default:"Member" }}</a>
+        </div>
+      </div>
+
+      {# ✅ POST form — required since Django 5.0 for LogoutView #}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">
+          <span>🚪</span> Sign out
+        </button>
+      </form>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="dash-content">
+
+    {% if user.role == 'freelancer' %}
+    <!-- FREELANCER -->
+    <div class="page-header">
+      <h1>Good to see you, {{ user.username }} 👋</h1>
+      <p>Here's an overview of your freelance activity today.</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><span class="stat-icon">💵</span><div class="stat-value">${{total_earnings}}</div><div class="stat-label">Total earnings</div></div>
+      <div class="stat-card"><span class="stat-icon">📋</span><div class="stat-value">{{active_contracts}}</div><div class="stat-label">Active contracts</div></div>
+      <div class="stat-card"><span class="stat-icon">📨</span><div class="stat-value">{{open_proposals}}</div><div class="stat-label">Open proposals</div></div>
+      <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-value">{{avg_rating}}</div><div class="stat-label">Avg. rating</div></div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Active Contracts</span>
+      <a href="{% url 'contract_list' %}" class="btn btn-ghost" style="font-size:.8rem;padding:7px 16px;">View all</a>
+    </div>
+    <div class="cards-list">
+      {% for p in active_projects_freelancer %}
+      <div class="project-card">
+
+        <div class="project-thumb">
+          {% if p.image %}
+            <img src="{{ p.image.url }}" alt="{{ p.title }}"
+              style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
+          {% else %}
+            💼
+          {% endif %}
+        </div>
+
+        <div class="project-info">
+          <div class="project-name">{{ p.title }}</div>
+          <div class="project-meta">
+            <span>🏢 {{ p.client.username }}</span>
+            <span>💳 ${{ p.budget }}</span>
+            <span>📅 {{ p.deadline|date:"d M Y" }}</span>
+          </div>
+        </div>
+
+        <span class="badge badge-active">Active</span>
+
+        <div class="project-amount" style="text-align:right;flex-shrink:0;">
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">Budget</div>
+          ${{ p.budget }}
+        </div>
+
+        <a href="{% url 'project_detail_freelancer' p.pk %}"
+          class="btn btn-ghost"
+          style="font-size:.8rem;padding:8px 16px;flex-shrink:0;"
+          onclick="event.stopPropagation()">
+          Details →
+        </a>
+
+      </div>
+      {% empty %}
+      <div class="empty-state">
+        <span class="empty-icon">💼</span>
+        <p>No active contracts yet. Browse open jobs to get started.</p>
+        <a href="{% url 'project_list' %}" class="btn btn-primary">Browse Jobs</a>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="section-header"><span class="section-title">Quick Actions</span></div>
+        <div class="actions-grid">
+          <a href="{% url 'project_list' %}" class="action-btn"><span>🔍</span> Browse Jobs</a>
+          <a href="{% url 'profile' %}" class="action-btn"><span>👤</span> My profile</a>
+          <a href="#" class="action-btn"><span>💵</span>Earnings history</a>
+          <a href="#" class="action-btn"><span>📊</span> Analytics</a>
+        </div>
+      </div>
+      <div>
+        <div class="section-header"><span class="section-title">Recent Activity</span></div>
+        <div class="card" style="padding:8px 16px;">
+          <div class="empty-state" style="padding:24px;"><span class="empty-icon">📭</span><p>No activity yet</p></div>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- CLIENT -->
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <div>
+        <h1>Welcome back, {{ user.username }} 👋</h1>
+        <p>Manage your projects and find great freelancers.</p>
+      </div>
+      <a href="{% url 'project_create' %}" class="btn btn-primary">+ Post a Job</a>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><span class="stat-icon">📁</span><div class="stat-value">{{count}}</div><div class="stat-label">Active projects</div></div>
+      <div class="stat-card"><span class="stat-icon">📨</span><div class="stat-value">{{pending_proposals}}</div><div class="stat-label">New proposals</div></div>
+      <div class="stat-card"><span class="stat-icon">💳</span><div class="stat-value">${{total_spend}}</div><div class="stat-label">Total spent</div></div>
+      <div class="stat-card"><span class="stat-icon">✅</span><div class="stat-value">{{completed}}</div><div class="stat-label">Completed</div></div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Active Projects</span>
+      <a href="{% url 'my_projects' %}" class="btn btn-ghost" style="font-size:.8rem;padding:7px 16px;">All projects</a>
+    </div>
+    <div class="cards-list">
+
+  {% for p in active_projects %}
+
+  <a href="{% url 'project_detail' p.id %}" class="project-link">
+  <div class="project-card">
+      <h3>{{ p.title }}</h3>
+      <p>{{ p.description|truncatewords:20 }}</p>
+
+      <div class="project-meta">
+          <span>💰 ${{ p.budget }}</span>
+          <span>📅 {{ p.deadline }}</span>
+      </div>
+  </div>
+</a>
+
+  {% empty %}
+
+  <div class="empty-state">
+    <span class="empty-icon">📁</span>
+    <p>No active projects yet. Post your first job to receive proposals.</p>
+    <a href="{% url 'project_create' %}" class="btn btn-primary">Post a Job</a>
+  </div>
+
+  {% endfor %}
+
+</div>
+    <div class="two-col">
+      <div>
+        <div class="section-header"><span class="section-title">Quick Actions</span></div>
+        <div class="actions-grid">
+          <a href="{% url 'project_create' %}" class="action-btn"><span>✏️</span> Post a Job</a>
+          <a href="{% url 'freelancer_list' %}" class="action-btn"><span>🔍</span> Find Talent</a>
+          <a href="#" class="action-btn"><span>💬</span> Messages</a>
+          <a href="#" class="action-btn"><span>🧾</span> Invoices</a>
+        </div>
+      </div>
+      <div>
+        <div class="section-header"><span class="section-title">Recent Activity</span></div>
+        <div class="card" style="padding:8px 16px;">
+          <div class="empty-state" style="padding:24px;"><span class="empty-icon">📭</span><p>No activity yet</p></div>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+
+{% else %}
+<!-- ╔═══════════════════════════════════════════════╗
+     ║              LANDING PAGE                     ║
+     ╚═══════════════════════════════════════════════╝ -->
+<div class="landing">
+
+  <section class="hero">
+    <div class="hero-badge"><span class="pulse"></span> Now live · Join free</div>
+    <h1 class="hero-headline">The platform where<br><span class="accent">great work</span> happens</h1>
+    <p class="hero-sub">Connect with elite freelancers or find high-value projects. Built for professionals who move fast.</p>
+    <div class="hero-cta">
+      <a href="{% url 'signup' %}" class="btn btn-primary" style="font-size:1rem;padding:14px 36px;">Get started free →</a>
+      <a href="{% url 'login' %}"  class="btn btn-outline" style="font-size:1rem;padding:14px 36px;">Sign in</a>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stats-bar-item"><div class="stats-bar-num">48K+</div><div class="stats-bar-label">Freelancers</div></div>
+    <div class="stats-bar-item"><div class="stats-bar-num">12K+</div><div class="stats-bar-label">Projects posted</div></div>
+    <div class="stats-bar-item"><div class="stats-bar-num">$2.4M</div><div class="stats-bar-label">Paid out</div></div>
+    <div class="stats-bar-item"><div class="stats-bar-num">4.9★</div><div class="stats-bar-label">Avg. rating</div></div>
+  </div>
+
+  <section class="features">
+    <h2 class="features-title">Everything you need to succeed</h2>
+    <div class="features-grid">
+      <div class="feature-card"><span class="feature-icon">🔒</span><div class="feature-title">Secure Payments</div><div class="feature-desc">Funds held in escrow, released only when you approve the work. Zero risk.</div></div>
+      <div class="feature-card"><span class="feature-icon">⚡</span><div class="feature-title">Fast Matching</div><div class="feature-desc">Smart system matches your project with the right freelancers in minutes.</div></div>
+      <div class="feature-card"><span class="feature-icon">📊</span><div class="feature-title">Real-time Tracking</div><div class="feature-desc">Monitor milestones and deliverables from one clean dashboard.</div></div>
+      <div class="feature-card"><span class="feature-icon">💬</span><div class="feature-title">Built-in Messaging</div><div class="feature-desc">Communicate and share files directly. No third-party tools needed.</div></div>
+      <div class="feature-card"><span class="feature-icon">🌍</span><div class="feature-title">Global Talent Pool</div><div class="feature-desc">Verified professionals from 120+ countries across every skill category.</div></div>
+      <div class="feature-card"><span class="feature-icon">🛡️</span><div class="feature-title">Dispute Protection</div><div class="feature-desc">Our team mediates any conflict fairly. You're always protected.</div></div>
+    </div>
+  </section>
+
+  <div class="cta-banner">
+    <h2>Ready to get started?</h2>
+    <p>Join thousands of clients and freelancers already on NexWork.</p>
+    <div class="cta-btns">
+      <a href="{% url 'signup' %}" class="btn btn-primary" style="font-size:.95rem;padding:13px 32px;">Create free account</a>
+      <a href="{% url 'login' %}"  class="btn btn-outline" style="font-size:.95rem;padding:13px 32px;">Sign in</a>
+    </div>
+  </div>
+
+</div>
+{% endif %}
+
+{% endblock %}

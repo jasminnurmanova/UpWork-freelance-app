@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% block title %}Available Projects · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .browse-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Page header ── */
+  .page-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.9rem; }
+
+  .result-count {
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    white-space: nowrap;
+  }
+
+  /* ── Filters ── */
+  .filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 8px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .18s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+
+  .filter-pill:hover  { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .filters-right {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .search-wrap {
+    position: relative;
+  }
+
+  .search-wrap .s-ico {
+    position: absolute;
+    left: 13px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+  }
+
+  .search-wrap input {
+    width: 230px;
+    padding: 9px 16px 9px 36px;
+    border-radius: 100px;
+    font-size: 0.82rem;
+  }
+
+  /* ── Project grid ── */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  /* ── Project card ── */
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color .2s, transform .22s, box-shadow .22s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .project-card:hover {
+    border-color: rgba(79,142,247,.4);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0,0,0,.3);
+  }
+
+  /* Card image */
+  .card-image {
+    width: 100%;
+    height: 170px;
+    overflow: hidden;
+    position: relative;
+    background: var(--surface2);
+    flex-shrink: 0;
+  }
+
+  .card-image img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+
+  .project-card:hover .card-image img { transform: scale(1.04); }
+
+  .card-image-placeholder {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,
+      rgba(79,142,247,.08) 0%,
+      rgba(167,139,250,.06) 100%);
+    font-size: 2.5rem;
+    opacity: .4;
+  }
+
+  /* Budget pill on image */
+  .card-budget-pill {
+    position: absolute;
+    bottom: 12px; right: 12px;
+    background: rgba(8,11,18,.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  /* Card body */
+  .card-body {
+    padding: 20px 22px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 10px;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-desc {
+    font-size: 0.845rem;
+    color: var(--muted);
+    line-height: 1.7;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+
+  /* Meta row */
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.77rem;
+    color: var(--muted);
+  }
+
+  /* View button */
+  .card-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    transition: all .18s;
+    margin-top: auto;
+  }
+
+  .card-cta:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .card-cta .arrow {
+    transition: transform .18s;
+  }
+
+  .card-cta:hover .arrow { transform: translateX(4px); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 32px;
+    border: 1px dashed var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+  }
+
+  .empty-state .e-icon { font-size: 3rem; display: block; margin-bottom: 16px; opacity: .35; }
+
+  .empty-state h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p { color: var(--muted); font-size: 0.875rem; }
+
+  @media (max-width: 640px) {
+    .browse-wrapper { padding: 32px 16px; }
+    .projects-grid  { grid-template-columns: 1fr; }
+    .filters-right  { margin-left: 0; width: 100%; }
+    .search-wrap    { flex: 1; }
+    .search-wrap input { width: 100%; }
+    .page-top { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="browse-wrapper">
+
+  <!-- ── Header ── -->
+  <div class="page-top">
+    <div>
+      <h1>Available Projects</h1>
+      <p>Browse open projects and submit your proposal.</p>
+    </div>
+    <span class="result-count">{{ projects|length }} project{{ projects|length|pluralize }} found</span>
+  </div>
+
+  <!-- ── Filters ── -->
+  <div class="filters-bar">
+    <button class="filter-pill active" onclick="filterBy(this, 'all')">All</button>
+    <button class="filter-pill" onclick="filterBy(this, 'low')">Under $500</button>
+    <button class="filter-pill" onclick="filterBy(this, 'mid')">$500 – $2000</button>
+    <button class="filter-pill" onclick="filterBy(this, 'high')">$2000+</button>
+    <div class="filters-right">
+      <div class="search-wrap">
+        <span class="s-ico">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search projects…" oninput="searchCards()">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Grid ── -->
+  <div class="projects-grid" id="projectsGrid">
+
+    {% for project in projects %}
+    <div
+      class="project-card"
+      data-title="{{ project.title|lower }}"
+      data-budget="{{ project.budget }}"
+      onclick="window.location='{% url 'project_detail_freelancer' project.id %}'"
+    >
+
+      <!-- Image -->
+      <div class="card-image">
+        {% if project.image %}
+          <img src="{{ project.image.url }}" alt="{{ project.title }}">
+        {% else %}
+          <div class="card-image-placeholder">📁</div>
+        {% endif %}
+        <span class="card-budget-pill">${{ project.budget }}</span>
+      </div>
+
+      <!-- Body -->
+      <div class="card-body">
+        <div class="card-title">{{ project.title }}</div>
+        <p class="card-desc">{{ project.description }}</p>
+
+        <div class="card-meta">
+          <span class="meta-chip">📅 {{ project.deadline|date:"d M Y" }}</span>
+          <span class="meta-chip">💳 ${{ project.budget }}</span>
+        </div>
+
+        <a
+          href="{% url 'project_detail_freelancer' project.id %}"
+          class="card-cta"
+          onclick="event.stopPropagation()"
+        >
+          View Project <span class="arrow">→</span>
+        </a>
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <span class="e-icon">📭</span>
+      <h3>No projects available</h3>
+      <p>Check back soon — new projects are posted every day.</p>
+    </div>
+    {% endfor %}
+
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  // Filter pills
+  function filterBy(btn, range) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('.project-card').forEach(card => {
+      const budget = parseFloat(card.dataset.budget) || 0;
+      let show = true;
+      if      (range === 'low')  show = budget < 500;
+      else if (range === 'mid')  show = budget >= 500 && budget <= 2000;
+      else if (range === 'high') show = budget > 2000;
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+  // Search
+  function searchCards() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.project-card').forEach(card => {
+      card.style.display = card.dataset.title.includes(q) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

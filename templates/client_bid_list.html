@@ -1,0 +1,538 @@
+{% extends "base.html" %}
+{% block title %}Project Proposals · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .proposals-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Page header ── */
+  .page-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  .result-count {
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    white-space: nowrap;
+  }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color .2s;
+  }
+
+  .summary-card:hover { border-color: rgba(79,142,247,.25); }
+
+  .summary-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+
+  .summary-icon.yellow { background: rgba(240,192,96,.12); }
+  .summary-icon.green  { background: rgba(34,197,94,.12); }
+  .summary-icon.red    { background: rgba(239,68,68,.1); }
+
+  .summary-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .summary-lbl { font-size: 0.73rem; color: var(--muted); margin-top: 3px; }
+
+  /* ── Filter pills ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 7px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .18s;
+    font-family: inherit;
+  }
+
+  .filter-pill:hover  { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Bid card ── */
+  .bid-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px 26px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .bid-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 18px 0 0 18px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .bid-card.pending::before  { background: #fcd34d; }
+  .bid-card.accepted::before { background: #4ade80; }
+  .bid-card.rejected::before { background: #f87171; }
+  .bid-card:hover::before    { opacity: 1; }
+
+  .bid-card.pending:hover  { border-color: rgba(240,192,96,.3); box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+  .bid-card.accepted:hover { border-color: rgba(34,197,94,.3);  box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+  .bid-card.rejected:hover { border-color: rgba(239,68,68,.25); box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+
+  /* Card top row */
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .freelancer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .freelancer-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1rem; color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(79,142,247,.3);
+  }
+
+  .freelancer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .freelancer-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .freelancer-sub { font-size: 0.75rem; color: var(--muted); }
+
+  .card-top-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .bid-price-tag {
+    text-align: right;
+  }
+
+  .price-amount {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .price-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-top: 2px;
+  }
+
+  .bid-status-badge {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .badge-pending  { background: rgba(240,192,96,.12); color: #fcd34d; border: 1px solid rgba(240,192,96,.3); }
+  .badge-accepted { background: rgba(34,197,94,.12);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+  .badge-rejected { background: rgba(239,68,68,.1);   color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+
+  /* Divider */
+  .card-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* Project row */
+  .project-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .project-thumb {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; flex-shrink: 0;
+  }
+
+  .project-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .project-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  /* Message */
+  .bid-message {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.75;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Action row */
+  .card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-accept {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 20px;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.3);
+    border-radius: 9px;
+    color: #4ade80;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .18s;
+  }
+
+  .btn-accept:hover {
+    background: rgba(34,197,94,.2);
+    border-color: rgba(34,197,94,.5);
+    transform: translateY(-1px);
+  }
+
+  .btn-reject {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 20px;
+    background: rgba(239,68,68,.08);
+    border: 1px solid rgba(239,68,68,.25);
+    border-radius: 9px;
+    color: #f87171;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .18s;
+  }
+
+  .btn-reject:hover {
+    background: rgba(239,68,68,.15);
+    border-color: rgba(239,68,68,.4);
+    transform: translateY(-1px);
+  }
+
+  /* Already actioned state */
+  .actioned-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 9px;
+  }
+
+  .actioned-accepted { color: #4ade80; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2); }
+  .actioned-rejected { color: #f87171; background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.18); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 32px;
+    border: 1px dashed var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+  }
+
+  .empty-state .e-icon { font-size: 3rem; display: block; margin-bottom: 16px; opacity: .35; }
+
+  .empty-state h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin-bottom: 28px;
+    max-width: 320px;
+    margin-left: auto; margin-right: auto;
+    line-height: 1.65;
+  }
+
+  @media (max-width: 640px) {
+    .proposals-wrapper { padding: 32px 16px; }
+    .summary-bar  { grid-template-columns: 1fr 1fr; }
+    .page-top     { flex-direction: column; align-items: flex-start; }
+    .card-top     { flex-direction: column; align-items: flex-start; }
+    .card-top-right { width: 100%; justify-content: space-between; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="proposals-wrapper">
+
+  <!-- Page header -->
+  <div class="page-top">
+    <div>
+      <h1>My Project Proposals</h1>
+      <p>Review and respond to bids from freelancers.</p>
+    </div>
+    <span class="result-count">{{ bids|length }} proposal{{ bids|length|pluralize }}</span>
+  </div>
+
+  {% if bids %}
+
+  <!-- Summary -->
+  <div class="summary-bar">
+    <div class="summary-card">
+      <div class="summary-icon yellow">⏳</div>
+      <div>
+        <div class="summary-val" id="cntPending">—</div>
+        <div class="summary-lbl">Pending</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon green">✅</div>
+      <div>
+        <div class="summary-val" id="cntAccepted">—</div>
+        <div class="summary-lbl">Accepted</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon red">❌</div>
+      <div>
+        <div class="summary-val" id="cntRejected">—</div>
+        <div class="summary-lbl">Rejected</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <button class="filter-pill active" onclick="filterCards(this,'all')">All</button>
+    <button class="filter-pill" onclick="filterCards(this,'pending')">⏳ Pending</button>
+    <button class="filter-pill" onclick="filterCards(this,'accepted')">✅ Accepted</button>
+    <button class="filter-pill" onclick="filterCards(this,'rejected')">❌ Rejected</button>
+  </div>
+
+  {% endif %}
+
+  <!-- Bid list -->
+  <div id="bidsList">
+    {% for bid in bids %}
+    <div class="bid-card {{ bid.status }}" data-status="{{ bid.status }}">
+
+      <!-- Top row: freelancer + price + status -->
+      <div class="card-top">
+        <div class="freelancer-info">
+          <div class="freelancer-avatar">
+            {% if bid.freelancer.avatar %}
+              <img src="{{ bid.freelancer.avatar.url }}" alt="{{ bid.freelancer.username }}">
+            {% else %}
+              {{ bid.freelancer.username|first|upper }}
+            {% endif %}
+          </div>
+          <div>
+            <div class="freelancer-name">{{ bid.freelancer.username }}</div>
+            <div class="freelancer-sub">Freelancer</div>
+          </div>
+        </div>
+
+        <div class="card-top-right">
+          <div class="bid-price-tag">
+            <div class="price-amount">${{ bid.price }}</div>
+            <div class="price-label">Bid price</div>
+          </div>
+          <span class="bid-status-badge badge-{{ bid.status }}">
+            {% if bid.status == 'accepted' %}✓
+            {% elif bid.status == 'rejected' %}✕
+            {% else %}⏳
+            {% endif %}
+            {{ bid.status|capfirst }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Project label -->
+      <div class="project-row">
+        <div class="project-thumb">
+          {% if bid.project.image %}
+            <img src="{{ bid.project.image.url }}" alt="{{ bid.project.title }}">
+          {% else %}
+            📁
+          {% endif %}
+        </div>
+        <span class="project-name">📁 {{ bid.project.title }}</span>
+      </div>
+
+      <!-- Message -->
+      <div class="bid-message">{{ bid.message }}</div>
+
+      <div class="card-divider"></div>
+
+      <!-- Actions -->
+      <div class="card-actions">
+        {% if bid.status == 'pending' %}
+          {# ✅ Accept bid — POST to accept_bid URL #}
+          <form method="post" action="{% url 'accept_bid' bid.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-accept">✓ Accept</button>
+          </form>
+
+          {# ❌ Reject bid — add reject_bid URL when ready #}
+          <form method="post" action="{% url 'reject_bid' bid.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-reject">✕ Reject</button>
+          </form>
+
+        {% elif bid.status == 'accepted' %}
+          <span class="actioned-label actioned-accepted">✓ Accepted</span>
+
+        {% elif bid.status == 'rejected' %}
+          <span class="actioned-label actioned-rejected">✕ Rejected</span>
+
+        {% endif %}
+      </div>
+
+    </div>
+
+    {% empty %}
+    <div class="empty-state">
+      <span class="e-icon">📭</span>
+      <h3>No bids yet</h3>
+      <p>No freelancers have submitted proposals yet. Make sure your project is posted and open.</p>
+      <a href="{% url 'home' %}" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  function filterCards(btn, status) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.bid-card').forEach(card => {
+      card.style.display =
+        (status === 'all' || card.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const cards  = document.querySelectorAll('.bid-card');
+    const counts = { pending: 0, accepted: 0, rejected: 0 };
+    cards.forEach(c => { if (counts[c.dataset.status] !== undefined) counts[c.dataset.status]++; });
+    const p = document.getElementById('cntPending');
+    const a = document.getElementById('cntAccepted');
+    const r = document.getElementById('cntRejected');
+    if (p) p.textContent = counts.pending;
+    if (a) a.textContent = counts.accepted;
+    if (r) r.textContent = counts.rejected;
+  });
+</script>
+{% endblock %}
+<p>No bids yet</p>
+

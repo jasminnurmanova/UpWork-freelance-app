@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block title %}Create Account · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .signup-wrapper {
+    min-height: calc(100vh - var(--nav-h));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    position: relative;
+  }
+
+  .signup-wrapper::before {
+    content: '';
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px; height: 600px;
+    background: radial-gradient(ellipse at 30% 50%, rgba(79,142,247,.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 50%, rgba(167,139,250,.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .signup-container {
+    width: 100%;
+    max-width: 560px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .role-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .role-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .role-card:hover { border-color: rgba(79,142,247,.4); }
+
+  .role-card.active {
+    border-color: var(--accent);
+    background: rgba(79,142,247,.07);
+  }
+
+  .role-card.active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79,142,247,.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .role-icon {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .role-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .role-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .role-check {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .role-card.active .role-check { opacity: 1; }
+
+  .auth-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .auth-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .auth-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 36px;
+  }
+
+  .auth-sub a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .field-error { color: #f87171; font-size: 0.8rem; margin-top: 5px; }
+
+  .password-strength {
+    height: 3px;
+    border-radius: 10px;
+    background: var(--border);
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .password-strength-bar {
+    height: 100%;
+    border-radius: 10px;
+    width: 0%;
+    transition: width .3s, background .3s;
+  }
+
+  .terms-note {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+
+  .terms-note a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signup-wrapper">
+  <div class="signup-container">
+
+    <p class="auth-eyebrow">Get started free</p>
+    <h1 class="auth-title">Create your<br>account</h1>
+    <p class="auth-sub">
+      Already have an account? <a href="{% url 'login' %}">Sign in</a>
+    </p>
+
+    <!-- Role Selection -->
+    <div class="role-selector" id="roleSelector">
+      <div class="role-card active" data-role="client" onclick="selectRole('client')">
+        <span class="role-check">✓</span>
+        <span class="role-icon">🏢</span>
+        <div class="role-title">I'm a Client</div>
+        <div class="role-desc">Hire top freelancers and get projects done</div>
+      </div>
+      <div class="role-card" data-role="freelancer" onclick="selectRole('freelancer')">
+        <span class="role-check">✓</span>
+        <span class="role-icon">💼</span>
+        <div class="role-title">I'm a Freelancer</div>
+        <div class="role-desc">Find great projects and grow your career</div>
+      </div>
+    </div>
+
+    <form method="post" action="{% url 'signup' %}">
+      {% csrf_token %}
+      <input type="hidden" name="role" id="roleInput" value="client">
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error" style="margin-bottom:20px;">
+          ✕ {{ form.non_field_errors|join:", " }}
+        </div>
+      {% endif %}
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <p class="field-error">{{ form.first_name.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <p class="field-error">{{ form.last_name.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <p class="field-error">{{ form.username.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <p class="field-error">{{ form.email.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        {{ form.password1 }}
+        <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+        {% if form.password1.errors %}
+          <p class="field-error">{{ form.password1.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password</label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+          <p class="field-error">{{ form.password2.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:4px;">
+        Create account →
+      </button>
+    </form>
+
+    <p class="terms-note">
+      By creating an account you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+    </p>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function selectRole(role) {
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+    document.querySelector(`[data-role="${role}"]`).classList.add('active');
+    document.getElementById('roleInput').value = role;
+  }
+
+  // Password strength meter
+  const pwInput = document.querySelector('input[name="password1"]');
+  if (pwInput) {
+    pwInput.addEventListener('input', function() {
+      const val = this.value;
+      let score = 0;
+      if (val.length >= 8)  score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const bar = document.getElementById('strengthBar');
+      const colors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'];
+      const widths = ['0%', '25%', '50%', '75%', '100%'];
+      bar.style.width = widths[score];
+      bar.style.background = colors[score];
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block title %}My Contracts · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .contracts-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  .page-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  .result-count {
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+  }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color .2s;
+  }
+
+  .summary-card:hover { border-color: rgba(79,142,247,.25); }
+
+  .s-icon-box {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+
+  .s-icon-box.blue   { background: rgba(79,142,247,.12); }
+  .s-icon-box.green  { background: rgba(34,197,94,.12); }
+  .s-icon-box.purple { background: rgba(167,139,250,.12); }
+
+  .s-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .s-lbl { font-size: 0.73rem; color: var(--muted); margin-top: 3px; }
+
+  /* ── Filter pills ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 7px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .18s;
+    font-family: inherit;
+  }
+
+  .filter-pill:hover  { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Contract card ── */
+  .contract-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 26px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .contract-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 18px 0 0 18px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .contract-card.active::before   { background: #93c5fd; }
+  .contract-card.finished::before { background: #4ade80; }
+
+  .contract-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 36px rgba(0,0,0,.25);
+  }
+
+  .contract-card.active:hover   { border-color: rgba(79,142,247,.35); }
+  .contract-card.finished:hover { border-color: rgba(34,197,94,.35); }
+  .contract-card:hover::before  { opacity: 1; }
+
+  .contract-thumb {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .contract-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .contract-info { flex: 1; min-width: 0; }
+
+  .contract-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .contract-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .contract-meta span {
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .contract-badge {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .badge-active   { background: rgba(79,142,247,.12); color: #93c5fd; border: 1px solid rgba(79,142,247,.3); }
+  .badge-finished { background: rgba(34,197,94,.12);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+
+  .contract-arrow {
+    color: var(--muted);
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: transform .18s, color .18s;
+  }
+
+  .contract-card:hover .contract-arrow { transform: translateX(4px); color: var(--accent); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 32px;
+    border: 1px dashed var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+  }
+
+  .empty-state .e-icon { font-size: 3rem; display: block; margin-bottom: 16px; opacity: .35; }
+
+  .empty-state h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .empty-state p {
+    color: var(--muted);
+    font-size: 0.875rem;
+    margin-bottom: 28px;
+    line-height: 1.65;
+  }
+
+  @media (max-width: 640px) {
+    .contracts-wrapper { padding: 32px 16px; }
+    .summary-bar { grid-template-columns: 1fr 1fr; }
+    .contract-card { flex-wrap: wrap; }
+    .page-top { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contracts-wrapper">
+
+  <div class="page-top">
+    <div>
+      <h1>My Contracts</h1>
+      <p>Track all your active and finished contracts.</p>
+    </div>
+    <span class="result-count">{{ contracts|length }} contract{{ contracts|length|pluralize }}</span>
+  </div>
+
+  {% if contracts %}
+  <div class="summary-bar">
+    <div class="summary-card">
+      <div class="s-icon-box blue">📋</div>
+      <div>
+        <div class="s-val" id="cntTotal">{{ contracts|length }}</div>
+        <div class="s-lbl">Total</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon-box purple">⚡</div>
+      <div>
+        <div class="s-val" id="cntActive">—</div>
+        <div class="s-lbl">Active</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon-box green">✅</div>
+      <div>
+        <div class="s-val" id="cntFinished">—</div>
+        <div class="s-lbl">Finished</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-pill active" onclick="filterContracts(this,'all')">All</button>
+    <button class="filter-pill" onclick="filterContracts(this,'active')">⚡ Active</button>
+    <button class="filter-pill" onclick="filterContracts(this,'finished')">✅ Finished</button>
+  </div>
+  {% endif %}
+
+  <div id="contractsList">
+    {% for contract in contracts %}
+    <a href="{% url 'contract_detail' contract.id %}"
+       class="contract-card {{ contract.status }}"
+       data-status="{{ contract.status }}">
+
+      <div class="contract-thumb">
+        {% if contract.project.image %}
+          <img src="{{ contract.project.image.url }}" alt="{{ contract.project.title }}">
+        {% else %}
+          📋
+        {% endif %}
+      </div>
+
+      <div class="contract-info">
+        <div class="contract-title">{{ contract.project.title }}</div>
+        <div class="contract-meta">
+          <span>🏢 {{ contract.client.username }}</span>
+          <span>💼 {{ contract.freelancer.username }}</span>
+          <span>💳 ${{ contract.agreed_price }}</span>
+          <span>📊 {{ contract.status|capfirst }}</span>
+          <span>📅 {{ contract.created_at|date:"d M Y" }}</span>
+        </div>
+      </div>
+
+      <span class="contract-badge badge-{{ contract.status }}">
+        {% if contract.status == 'finished' %}✓{% else %}⚡{% endif %}
+        {{ contract.status|capfirst }}
+      </span>
+
+      <span class="contract-arrow">→</span>
+    </a>
+
+    {% empty %}
+    <div class="empty-state">
+      <span class="e-icon">📋</span>
+      <h3>No contracts yet</h3>
+      <p>Contracts are created when a client accepts a bid. They will appear here.</p>
+      <a href="{% url 'home' %}" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function filterContracts(btn, status) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.contract-card').forEach(card => {
+      card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.contract-card');
+    let active = 0, finished = 0;
+    cards.forEach(c => {
+      if (c.dataset.status === 'active')   active++;
+      if (c.dataset.status === 'finished') finished++;
+    });
+    const a = document.getElementById('cntActive');
+    const f = document.getElementById('cntFinished');
+    if (a) a.textContent = active;
+    if (f) f.textContent = finished;
+  });
+</script>
+{% endblock %}

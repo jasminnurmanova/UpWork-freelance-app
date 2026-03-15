@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Submit Work · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .submit-wrapper {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .2s; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb span { color: var(--border); }
+
+  .page-top { margin-bottom: 32px; }
+
+  .page-top .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    margin-bottom: 4px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .card-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* File upload area */
+  .file-drop {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+
+  .file-drop:hover { border-color: var(--accent); background: rgba(79,142,247,.04); }
+  .file-drop.has-file { border-color: var(--accent); border-style: solid; background: rgba(79,142,247,.05); }
+
+  .file-drop input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon  { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: .4; }
+  .drop-title { font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
+  .drop-hint  { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
+  .file-chosen {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(79,142,247,.08);
+    border: 1px solid rgba(79,142,247,.25);
+    border-radius: 10px;
+    margin-top: 12px;
+  }
+
+  .file-chosen.show { display: flex; }
+  .file-chosen .fc-icon { font-size: 1.4rem; }
+  .file-chosen .fc-name { font-size: .85rem; font-weight: 600; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-chosen .fc-size { font-size: .75rem; color: var(--muted); }
+
+  .char-row { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .char-count { font-size: .73rem; color: var(--muted); }
+  .char-count.warn { color: #f97316; }
+
+  .form-actions { display: flex; gap: 12px; }
+
+  @media (max-width: 480px) {
+    .submit-wrapper { padding: 32px 16px; }
+    .form-actions { flex-direction: column; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="submit-wrapper">
+
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Dashboard</a>
+    <span>›</span>
+    <a href="{% url 'contract_list' %}">Contracts</a>
+    <span>›</span>
+    <a href="{% url 'contract_detail' contract.id %}">{{ contract.project.title }}</a>
+    <span>›</span>
+    Submit Work
+  </div>
+
+  <div class="page-top">
+    <p class="eyebrow">📤 Work Submission</p>
+    <h1>Submit Your Work</h1>
+    <p>For: <strong>{{ contract.project.title }}</strong></p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" action="{% url 'submit_work' contract.id %}">
+    {% csrf_token %}
+
+    <!-- File upload -->
+    <div class="form-card">
+      <div class="card-heading">📎 Upload File</div>
+
+      <div class="file-drop" id="dropArea">
+        <input type="file" name="file" id="fileInput" required onchange="handleFile(this)">
+        <span class="drop-icon">📁</span>
+        <div class="drop-title">Click or drag your file here</div>
+        <div class="drop-hint">ZIP, PDF, images, or any project file · Max 50MB</div>
+      </div>
+
+      <div class="file-chosen" id="fileChosen">
+        <span class="fc-icon">📄</span>
+        <span class="fc-name" id="fileName">—</span>
+        <span class="fc-size" id="fileSize">—</span>
+      </div>
+    </div>
+
+    <!-- Message -->
+    <div class="form-card">
+      <div class="card-heading">✍️ Message (optional)</div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label for="id_message">Notes for the client</label>
+        <textarea
+          id="id_message"
+          name="message"
+          rows="5"
+          placeholder="Describe what you've done, any notes or instructions for the client…"
+          maxlength="1000"
+          oninput="countChars(this,'msgCount',1000)"
+          style="resize:vertical;"
+        ></textarea>
+        <div class="char-row">
+          <span class="char-count" id="msgCount">0 / 1000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;font-size:.95rem;padding:13px;">
+        📤 Submit Work
+      </button>
+      <a href="{% url 'contract_detail' contract.id %}" class="btn btn-outline"
+        style="flex:1;justify-content:center;font-size:.875rem;padding:13px;">
+        ← Cancel
+      </a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function handleFile(input) {
+    const area   = document.getElementById('dropArea');
+    const chosen = document.getElementById('fileChosen');
+    const name   = document.getElementById('fileName');
+    const size   = document.getElementById('fileSize');
+
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      area.classList.add('has-file');
+      chosen.classList.add('show');
+      name.textContent = file.name;
+      size.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    }
+  }
+
+  function countChars(el, id, max) {
+    const span = document.getElementById(id);
+    const len  = el.value.length;
+    span.textContent = len + ' / ' + max;
+    span.className   = 'char-count' + (len > max * 0.9 ? ' warn' : '');
+  }
+</script>
+{% endblock %}

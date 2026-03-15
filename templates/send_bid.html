@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% block title %}Send Bid · {{ project.title }} · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .bid-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .2s; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb span { color: var(--border); }
+
+  /* ── Page title ── */
+  .page-top {
+    margin-bottom: 36px;
+  }
+
+  .page-top .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  /* ── Layout ── */
+  .bid-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── Cards ── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: border-color .2s;
+  }
+
+  .form-card:last-child { margin-bottom: 0; }
+
+  .card-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Price input with $ prefix */
+  .price-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .price-prefix {
+    position: absolute;
+    left: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--muted);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .price-wrap input { padding-left: 28px; font-size: 1.1rem; font-weight: 600; }
+
+  /* Budget compare bar */
+  .budget-compare {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .budget-compare strong { color: var(--text); }
+
+  .compare-indicator {
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .ind-good { background: rgba(34,197,94,.12); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+  .ind-high { background: rgba(239,68,68,.1);  color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+  .ind-low  { background: rgba(79,142,247,.12); color: #93c5fd; border: 1px solid rgba(79,142,247,.25); }
+
+  /* Message textarea */
+  .char-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
+
+  .char-count { font-size: 0.73rem; color: var(--muted); }
+  .char-count.warn { color: #f97316; }
+  .char-count.over { color: #f87171; }
+
+  /* Writing tips */
+  .tips-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  .tips-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .tips-list li span { flex-shrink: 0; }
+
+  /* ── Project snapshot (sidebar) ── */
+  .project-snap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
+  }
+
+  .snap-image {
+    width: 100%; height: 140px;
+    overflow: hidden;
+    position: relative;
+    background: var(--surface2);
+  }
+
+  .snap-image img { width: 100%; height: 100%; object-fit: cover; }
+
+  .snap-image-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; opacity: .3;
+    background: linear-gradient(135deg,
+      rgba(79,142,247,.08) 0%,
+      rgba(167,139,250,.06) 100%);
+  }
+
+  .snap-body { padding: 20px; }
+
+  .snap-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  .snap-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .snap-fields { display: flex; flex-direction: column; gap: 0; }
+
+  .snap-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+
+  .snap-row .lbl { color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .snap-row .val { font-weight: 600; color: var(--text); }
+
+  /* ── Submit card ── */
+  .submit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px;
+  }
+
+  /* Field errors */
+  .field-error { color: #f87171; font-size: 0.8rem; margin-top: 5px; }
+
+  @media (max-width: 720px) {
+    .bid-layout { grid-template-columns: 1fr; }
+    .project-snap { position: static; }
+    .bid-wrapper  { padding: 32px 16px; }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="bid-wrapper">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Dashboard</a>
+    <span>›</span>
+    <a href="#">Browse Projects</a>
+    <span>›</span>
+    <a href="{% url 'project_detail_freelancer' project.pk %}">{{ project.title }}</a>
+    <span>›</span>
+    Send Bid
+  </div>
+
+  <!-- Page title -->
+  <div class="page-top">
+    <p class="eyebrow">📨 Submit a proposal</p>
+    <h1>Send Bid for:<br>{{ project.title }}</h1>
+    <p>Craft a compelling bid to stand out from other freelancers.</p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="bid-layout">
+
+      <!-- ══ LEFT: FORM ══ -->
+      <div>
+
+        <!-- Price -->
+        <div class="form-card">
+          <div class="card-heading">💳 Your Price</div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="{{ form.price.id_for_label }}">Bid Amount (USD)</label>
+            <div class="price-wrap">
+              <span class="price-prefix">$</span>
+              {{ form.price }}
+            </div>
+            {% if form.price.errors %}
+              <p class="field-error">{{ form.price.errors|join:", " }}</p>
+            {% endif %}
+            <div class="budget-compare">
+              <span>Client budget: <strong>${{ project.budget }}</strong></span>
+              <span class="compare-indicator ind-good" id="priceIndicator">Enter your price</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message -->
+        <div class="form-card">
+          <div class="card-heading">✍️ Your Proposal</div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="{{ form.message.id_for_label }}">Cover Message</label>
+            {{ form.message }}
+            <div class="char-row">
+              <span class="char-count" id="msgCount">0 / 1000</span>
+            </div>
+            {% if form.message.errors %}
+              <p class="field-error">{{ form.message.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <div style="margin-top:20px;">
+            <div class="card-heading">💡 Writing Tips</div>
+            <ul class="tips-list">
+              <li><span>✓</span> Introduce yourself and your relevant experience</li>
+              <li><span>✓</span> Explain specifically how you'll approach this project</li>
+              <li><span>✓</span> Mention your estimated timeline to complete the work</li>
+              <li><span>✓</span> Keep it concise — clients prefer clear, focused proposals</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:12px;">
+          <button type="submit" class="btn btn-primary"
+            style="flex:1;font-size:.95rem;padding:13px;justify-content:center;">
+            📨 Send Bid
+          </button>
+          <a href="{% url 'project_detail_freelancer' project.pk %}"
+            class="btn btn-outline"
+            style="flex:1;justify-content:center;font-size:.875rem;padding:13px;">
+            ← Back to Project
+          </a>
+        </div>
+
+      </div>
+
+      <!-- ══ RIGHT: PROJECT SNAPSHOT ══ -->
+      <div>
+
+        <div class="project-snap">
+          <div class="snap-image">
+            {% if project.image %}
+              <img src="{{ project.image.url }}" alt="{{ project.title }}">
+            {% else %}
+              <div class="snap-image-placeholder">📁</div>
+            {% endif %}
+          </div>
+          <div class="snap-body">
+            <div class="snap-title">{{ project.title }}</div>
+            <p class="snap-desc">{{ project.description }}</p>
+            <div class="snap-fields">
+              <div class="snap-row">
+                <span class="lbl">💳 Budget</span>
+                <span class="val">${{ project.budget }}</span>
+              </div>
+              <div class="snap-row">
+                <span class="lbl">📅 Deadline</span>
+                <span class="val">{{ project.deadline|date:"d M Y" }}</span>
+              </div>
+              <div class="snap-row">
+                <span class="lbl">📊 Status</span>
+                <span class="val">{{ project.get_status_display }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-card">
+          <p style="font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:14px;">
+            By submitting a bid you agree to NexWork's
+            <a href="#" style="color:var(--accent);text-decoration:none;">terms of service</a>.
+            The client will be notified and can accept or decline your proposal.
+          </p>
+          <button type="submit" class="btn btn-primary"
+            style="width:100%;font-size:.9rem;padding:12px;justify-content:center;">
+            📨 Send Bid
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  // Char counter for message
+  const msgField = document.querySelector('[name="message"]');
+  if (msgField) {
+    msgField.setAttribute('rows', '7');
+    msgField.setAttribute('placeholder', 'Hi, I\'m interested in your project…\n\nI have experience with...\n\nI can deliver this in...');
+    msgField.addEventListener('input', function() {
+      const len  = this.value.length;
+      const span = document.getElementById('msgCount');
+      span.textContent = len + ' / 1000';
+      span.className = 'char-count' + (len > 900 ? (len >= 1000 ? ' over' : ' warn') : '');
+    });
+  }
+
+  // Price vs budget indicator
+  const priceField = document.querySelector('[name="price"]');
+  const budget     = parseFloat('{{ project.budget }}') || 0;
+
+  if (priceField) {
+    priceField.addEventListener('input', function() {
+      const val = parseFloat(this.value) || 0;
+      const ind = document.getElementById('priceIndicator');
+      if (!val)             { ind.textContent = 'Enter your price'; ind.className = 'compare-indicator ind-low'; }
+      else if (val > budget * 1.1) { ind.textContent = 'Above budget';    ind.className = 'compare-indicator ind-high'; }
+      else if (val < budget * 0.5) { ind.textContent = 'Well under budget'; ind.className = 'compare-indicator ind-low'; }
+      else                  { ind.textContent = 'Within budget ✓';  ind.className = 'compare-indicator ind-good'; }
+    });
+  }
+</script>
+{% endblock %}

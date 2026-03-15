@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Leave a Review · NexWork{% endblock %}
+
+{% block extra_css %}
+<style>
+  .review-wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .2s; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb span { color: var(--border); }
+
+  .page-top { margin-bottom: 32px; text-align: center; }
+
+  .page-top .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .page-top h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    margin-bottom: 6px;
+  }
+
+  .page-top p { color: var(--muted); font-size: 0.875rem; }
+
+  /* Freelancer card */
+  .freelancer-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .f-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.1rem; color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(79,142,247,.3);
+  }
+
+  .f-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .f-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+  .f-sub  { font-size: 0.75rem; color: var(--muted); }
+
+  /* Form card */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .card-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Star rating */
+  .star-picker {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .star-picker input { display: none; }
+
+  .star-picker label {
+    font-size: 2.4rem;
+    cursor: pointer;
+    color: var(--border);
+    transition: color .15s, transform .15s;
+    margin-bottom: 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .star-picker label:hover,
+  .star-picker label:hover ~ label,
+  .star-picker input:checked ~ label {
+    color: #fcd34d;
+    text-shadow: 0 0 12px rgba(252,211,77,.4);
+  }
+
+  .star-picker label:hover { transform: scale(1.2); }
+
+  .star-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+    min-height: 20px;
+    transition: opacity .2s;
+  }
+
+  /* Comment */
+  .char-row { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .char-count { font-size: .73rem; color: var(--muted); }
+  .char-count.warn { color: #f97316; }
+
+  .form-actions { display: flex; gap: 12px; }
+
+  @media (max-width: 480px) {
+    .review-wrapper  { padding: 32px 16px; }
+    .star-picker label { font-size: 2rem; }
+    .form-actions { flex-direction: column; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-wrapper">
+
+  <div class="breadcrumb">
+    <a href="{% url 'home' %}">Dashboard</a>
+    <span>›</span>
+    <a href="{% url 'contract_list' %}">Contracts</a>
+    <span>›</span>
+    <a href="{% url 'contract_detail' contract.id %}">{{ contract.project.title }}</a>
+    <span>›</span>
+    Leave Review
+  </div>
+
+  <div class="page-top">
+    <p class="eyebrow">⭐ Review</p>
+    <h1>Leave a Review</h1>
+    <p>How was your experience working with this freelancer?</p>
+  </div>
+
+  <!-- Freelancer card -->
+  <div class="freelancer-card">
+    <div class="f-avatar">
+      {% if contract.freelancer.avatar %}
+        <img src="{{ contract.freelancer.avatar.url }}" alt="{{ contract.freelancer.username }}">
+      {% else %}
+        {{ contract.freelancer.username|first|upper }}
+      {% endif %}
+    </div>
+    <div>
+      <div class="f-name">{{ contract.freelancer.username }}</div>
+      <div class="f-sub">💼 Freelancer · {{ contract.project.title }}</div>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'create_review' contract.id %}">
+    {% csrf_token %}
+
+    <!-- Star rating -->
+    <div class="form-card">
+      <div class="card-heading">⭐ Rating</div>
+
+      <div class="star-picker">
+        <input type="radio" name="rating" id="s5" value="5">
+        <label for="s5" title="Excellent">★</label>
+        <input type="radio" name="rating" id="s4" value="4">
+        <label for="s4" title="Good">★</label>
+        <input type="radio" name="rating" id="s3" value="3">
+        <label for="s3" title="Average">★</label>
+        <input type="radio" name="rating" id="s2" value="2">
+        <label for="s2" title="Below average">★</label>
+        <input type="radio" name="rating" id="s1" value="1">
+        <label for="s1" title="Poor">★</label>
+      </div>
+      <p class="star-hint" id="starHint">Select a rating</p>
+    </div>
+
+    <!-- Comment -->
+    <div class="form-card">
+      <div class="card-heading">💬 Comment</div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label for="id_comment">Your feedback</label>
+        <textarea
+          id="id_comment"
+          name="comment"
+          rows="5"
+          placeholder="Describe the quality of work, communication, and overall experience…"
+          maxlength="1000"
+          oninput="countChars(this,'commentCount',1000)"
+          style="resize:vertical;"
+        ></textarea>
+        <div class="char-row">
+          <span class="char-count" id="commentCount">0 / 1000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary"
+        style="flex:1;justify-content:center;font-size:.95rem;padding:13px;">
+        ⭐ Submit Review
+      </button>
+      <a href="{% url 'contract_detail' contract.id %}" class="btn btn-outline"
+        style="flex:1;justify-content:center;font-size:.875rem;padding:13px;">
+        ← Cancel
+      </a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const hints = { 1:'Poor', 2:'Below average', 3:'Average', 4:'Good', 5:'Excellent ⭐' };
+
+  document.querySelectorAll('.star-picker input').forEach(input => {
+    input.addEventListener('change', function() {
+      const hint = document.getElementById('starHint');
+      hint.textContent = hints[this.value] || '';
+    });
+  });
+
+  function countChars(el, id, max) {
+    const span = document.getElementById(id);
+    const len  = el.value.length;
+    span.textContent = len + ' / ' + max;
+    span.className   = 'char-count' + (len > max * 0.9 ? ' warn' : '');
+  }
+</script>
+{% endblock %}
