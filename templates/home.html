@@ -453,7 +453,7 @@
     </div>
 
     <div class="section-header">
-      <span class="section-title">Active Contracts</span>
+      <span class="section-title">Active Projects You May Like</span>
       <a href="{% url 'contract_list' %}" class="btn btn-ghost" style="font-size:.8rem;padding:7px 16px;">View all</a>
     </div>
     <div class="cards-list">
@@ -496,7 +496,7 @@
       {% empty %}
       <div class="empty-state">
         <span class="empty-icon">💼</span>
-        <p>No active contracts yet. Browse open jobs to get started.</p>
+        <p>No active projects yet. Browse open jobs to get started.</p>
         <a href="{% url 'project_list' %}" class="btn btn-primary">Browse Jobs</a>
       </div>
       {% endfor %}
@@ -538,7 +538,7 @@
 
 
     <div class="section-header">
-      <span class="section-title">Active Projects</span>
+      <span class="section-title">Latest</span>
       <a href="{% url 'my_projects' %}" class="btn btn-ghost" style="font-size:.8rem;padding:7px 16px;">All projects</a>
     </div>
     <div class="cards-list">

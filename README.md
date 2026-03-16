@@ -120,3 +120,4 @@ http://127.0.0.1:8000
 
 Jasmin Nurmanova
 GitHub: https://github.com/jasminnurmanova
+POSTMAN: https://documenter.getpostman.com/view/51287189/2sBXigNEGX

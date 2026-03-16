@@ -19,7 +19,7 @@ class Dashboard(LoginRequiredMixin,View):
         now = timezone.now()
         total_spend = Contract.objects.filter(client=request.user,status="finished").aggregate(total=Sum("agreed_price") )["total"] or 0
         pending_proposals = Bid.objects.filter(project__client=request.user,status="pending" ).count()
-        active_projects = Project.objects.filter(client=request.user)
+        active_projects = Project.objects.filter(client=request.user,status="open")
         completed = Project.objects.filter(client=request.user,status='completed').count()
         count=len(active_projects)
 
@@ -27,9 +27,8 @@ class Dashboard(LoginRequiredMixin,View):
         active_contracts = Contract.objects.filter(freelancer=request.user, status="active").count()
         open_proposals = Bid.objects.filter(freelancer=request.user, status="pending").count()
         avg_rating = Review.objects.filter(contract__freelancer=request.user).aggregate(rating=Avg("rating"))["rating"] or 0
-        active_projects_freelancer=Project.objects.filter(status="open").order_by("-created_at")
-        context = {"total_earnings": total_earnings, "active_contracts": active_contracts,
-                   "open_proposals": open_proposals, "avg_rating": round(avg_rating, 1),'active_projects':active_projects,'count':count,'completed':completed,'total_spend':total_spend,'pending_proposals':pending_proposals,"active_projects_freelancer":active_projects_freelancer}
+        active_projects_freelancer = (Project.objects.filter(status="open", contract__isnull=True).exclude(bids__freelancer=request.user).order_by("-created_at").distinct()[:3])
+        context = {"total_earnings": total_earnings, "active_contracts": active_contracts, "open_proposals": open_proposals, "avg_rating": round(avg_rating, 1),'active_projects':active_projects,'count':count,'completed':completed,'total_spend':total_spend,'pending_proposals':pending_proposals,"active_projects_freelancer":active_projects_freelancer}
 
         return render(request, "home.html",context)
 
@@ -96,7 +95,6 @@ class ChangePasswordView(LoginRequiredMixin, View):
         current = request.POST.get("current_password")
         new = request.POST.get("new_password")
         confirm = request.POST.get("confirm_password")
-
         if not check_password(current, user.password):
             messages.error(request, "Current password is incorrect.")
             return redirect("profile")
